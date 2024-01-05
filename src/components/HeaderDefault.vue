@@ -10,7 +10,7 @@
         <img src="/svg/moon.svg" alt="moon" v-else class="w-7 h-7" />
       </button>
       <router-link to=""
-        ><img :src="`/svg/avatars/${randomInteger(1, 10)}-avatar.svg`" class="w-10" alt="user"
+        ><img :src="`./svg/avatars/${randomInteger(1, 10)}-avatar.svg`" class="w-10" alt="user"
       /></router-link>
       <div class="flex flex-col" v-if="usersStore.currentUser">
         <router-link to="">{{ usersStore.currentUser.username }}</router-link>

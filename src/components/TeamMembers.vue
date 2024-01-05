@@ -14,7 +14,7 @@
     >
       <div class="flex justify-between items-center">
         <span class="block mb-6">{{ member.username }}</span>
-        <img :src="`/svg/avatars/${randomInteger(1, 10)}-avatar.svg`" alt="avatar" class="w-12" />
+        <img :src="`./svg/avatars/${randomInteger(1, 10)}-avatar.svg`" alt="avatar" class="w-12" />
       </div>
       <span class="block text-sm text-light-gray">{{ member.jobTitle }}</span>
     </div>
