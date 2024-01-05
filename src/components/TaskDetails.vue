@@ -13,7 +13,7 @@
       ]"
     >
       <div class="flex justify-end gap-5">
-        <button @click="startEditTask(task)">
+        <button @click="startEditing(task)" v-if="!isEditing">
           <img src="/svg/edit-white.svg" alt="edit-white" v-if="isDark" />
           <img src="/svg/edit.svg" alt="edit" v-else />
         </button>
@@ -21,14 +21,14 @@
           <img src="/svg/delete-white.svg" alt="delete-white" v-if="isDark" />
           <img src="/svg/delete.svg" alt="delete" v-else />
         </button>
-        <button @click="tasksStore.closeModal">
+        <button @click="closeModal">
           <img src="/svg/close-white.svg" alt="close-white" v-if="isDark" />
           <img src="/svg/close.svg" alt="close" v-else />
         </button>
       </div>
       <div class="mt-4">
-        <div v-if="tasksStore.isEditing">
-          <form @submit.prevent>
+        <div v-if="isEditing">
+          <form @submit.prevent="editTask">
             <input
               v-model="tasksStore.editingTask.name"
               class="block text-2xl mb-3 h-10 w-60 px-3 rounded-lg dark:bg-zinc-700"
@@ -46,17 +46,12 @@
               text-input
             />
             <div class="flex gap-5 mt-3">
-              <button
-                type="submit"
-                class="bg-main-blue px-2 h-10 rounded-lg text-white"
-                @click="editTask"
-              >
+              <button type="submit" class="bg-main-blue px-2 h-10 rounded-lg text-white">
                 {{ $t('buttons.confirm') }}
               </button>
               <button
-                type="submit"
                 class="bg-light-gray px-2 h-10 rounded-lg text-white"
-                @click="tasksStore.cancelEdit(task)"
+                @click="cancelEdit(task)"
               >
                 {{ $t('buttons.cancel') }}
               </button>
@@ -81,8 +76,7 @@
             <div class="flex gap-8 items-center text-gray-600 justify-end dark:text-gray-200">
               <span>{{ $t('tasks.endDate') }}</span>
               <div>
-                <span class="block text-right">{{ formatEndDate(task.endDate) }}</span>
-                <span class="block text-right text-xs">{{ formatEndYear(task.endDate) }}</span>
+                <span class="block text-right">{{ formatEndYear(task.endDate) }}</span>
               </div>
             </div>
           </div>
@@ -93,71 +87,169 @@
 </template>
 
 <script setup>
-import { useTasksStore } from '../stores/TasksStore'
-
 import VueDatePicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
+import { useTasksStore } from '../stores/TasksStore'
+import { useUsersStore } from '../stores/UsersStore'
 import { useDark } from '@vueuse/core'
 
-const isDark = useDark()
+import { db } from '../firebase'
+import { doc, deleteDoc, updateDoc, getDoc, collection } from 'firebase/firestore'
+import { useMutation } from 'vue-query'
 
-const tasksStore = useTasksStore()
+import { formatTimeYear } from '../composables/formatTimeYear'
+import { formatTimeDate } from '../composables/formatTimeDate'
+import { formatEndYear } from '../composables/formatEndYear'
 
-// eslint-disable-next-line no-unused-vars
 const props = defineProps({
   task: {
     type: Object,
     default: () => {}
-  }
+  },
+  isEditing: {
+    type: Boolean,
+    required: true
+  },
+  closeModal: Function,
+  closeEditing: Function,
+  openEditing: Function
 })
 
-const formatTimeYear = (timestamp) => {
-  const date = new Date(timestamp)
-  const options = { day: 'numeric', month: 'numeric', year: 'numeric' }
-  return date.toLocaleString('uk-UA', options)
+const tasksStore = useTasksStore()
+const usersStore = useUsersStore()
+const isDark = useDark()
+
+const startEditing = (task) => {
+  tasksStore.editingTask.id = task.id
+  tasksStore.editingTask.name = task.name
+  tasksStore.editingTask.description = task.description
+  tasksStore.editingTask.endDate = task.endDate
+  props.openEditing()
 }
 
-const formatTimeDate = (timestamp) => {
-  const date = new Date(timestamp)
-  const options = { hour: 'numeric', minute: 'numeric', hour12: false, timeZone: 'Europe/Kiev' }
-  return date.toLocaleString('uk-UA', options)
-}
+const editTaskMutation = useMutation(
+  async () => {
+    const taskDocRef = doc(usersStore.userTasksCollection, tasksStore.editingTask.id)
+    const currentTask = (await getDoc(taskDocRef)).data()
 
-const formatEndDate = (timestamp) => {
-  const date = timestamp.toDate()
-  const options = {
-    hour: 'numeric',
-    minute: 'numeric',
-    hour12: false,
-    timeZone: 'Europe/Kiev'
+    const assignedUserCollection = collection(db, `users/${currentTask.assignedToId}/tasks`)
+    const createdByUserCollection = collection(db, `users/${currentTask.createdById}/tasks`)
+
+    await Promise.all([
+      updateDoc(doc(assignedUserCollection, tasksStore.editingTask.id), {
+        name: tasksStore.editingTask.name,
+        description: tasksStore.editingTask.description,
+        endDate: tasksStore.editingTask.endDate
+      }),
+      updateDoc(doc(createdByUserCollection, tasksStore.editingTask.id), {
+        name: tasksStore.editingTask.name,
+        description: tasksStore.editingTask.description,
+        endDate: tasksStore.editingTask.endDate
+      })
+    ])
+  },
+  {
+    onSuccess: () => {
+      props.closeEditing()
+      tasksStore.editingTask.id = null
+      tasksStore.editingTask.name = ''
+      tasksStore.editingTask.description = ''
+      props.closeModal()
+    },
+    onError: (error) => {
+      console.error('Error editing task:', error)
+    }
   }
-  return date.toLocaleString('uk-UA', options)
-}
-
-const formatEndYear = (timestamp) => {
-  const date = timestamp.toDate()
-  const options = {
-    day: 'numeric',
-    month: 'numeric',
-    year: 'numeric'
-  }
-  return date.toLocaleString('uk-UA', options)
-}
-
-const startEditTask = (task) => {
-  tasksStore.openModal(task)
-  tasksStore.startEditing(task)
-}
+)
 
 const editTask = () => {
-  tasksStore.editTask()
-  tasksStore.closeModal()
+  editTaskMutation.mutate()
 }
 
-const deleteTask = (taskId) => {
-  tasksStore.deleteTask(taskId)
-  tasksStore.closeModal()
+const cancelEdit = () => {
+  props.closeEditing()
+  tasksStore.editingTask.name = ''
+  tasksStore.editingTask.description = ''
+  tasksStore.editingTask.endDate = ''
+  props.closeModal()
 }
+
+const deleteTaskMutation = useMutation(
+  async (taskId) => {
+    const taskDocRef = doc(usersStore.userTasksCollection, taskId)
+    const currentTask = (await getDoc(taskDocRef)).data()
+
+    const assignedUserCollection = collection(db, `users/${currentTask.assignedToId}/tasks`)
+    const createdByUserCollection = collection(db, `users/${currentTask.createdById}/tasks`)
+
+    await Promise.all([
+      deleteDoc(doc(assignedUserCollection, taskId)),
+      deleteDoc(doc(createdByUserCollection, taskId))
+    ])
+  },
+  {
+    onSuccess: () => {
+      props.closeModal()
+    },
+    onError: (error) => {
+      console.error('Error deleting task:', error)
+    }
+  }
+)
+
+const deleteTask = (taskId) => {
+  deleteTaskMutation.mutate(taskId)
+}
+
+// const editTask = async () => {
+//   try {
+//     const taskDocRef = doc(usersStore.userTasksCollection, tasksStore.editingTask.id)
+//     const currentTask = (await getDoc(taskDocRef)).data()
+
+//     const assignedUserCollection = collection(db, `users/${currentTask.assignedToId}/tasks`)
+//     const createdByUserCollection = collection(db, `users/${currentTask.createdById}/tasks`)
+
+//     await Promise.all([
+//       updateDoc(doc(assignedUserCollection, tasksStore.editingTask.id), {
+//         name: tasksStore.editingTask.name,
+//         description: tasksStore.editingTask.description,
+//         endDate: tasksStore.editingTask.endDate
+//       }),
+//       updateDoc(doc(createdByUserCollection, tasksStore.editingTask.id), {
+//         name: tasksStore.editingTask.name,
+//         description: tasksStore.editingTask.description,
+//         endDate: tasksStore.editingTask.endDate
+//       })
+//     ])
+
+//     props.closeEditing()
+//     tasksStore.editingTask.id = null
+//     tasksStore.editingTask.name = ''
+//     tasksStore.editingTask.description = ''
+//     props.closeModal()
+//   } catch (error) {
+//     console.error('Error updating task:', error)
+//   }
+// }
+
+// const deleteTask = async (taskId) => {
+//   try {
+//     const taskDocRef = doc(usersStore.userTasksCollection, taskId)
+
+//     const currentTask = (await getDoc(taskDocRef)).data()
+
+//     const assignedUserCollection = collection(db, `users/${currentTask.assignedToId}/tasks`)
+//     const createdByUserCollection = collection(db, `users/${currentTask.createdById}/tasks`)
+
+//     await Promise.all([
+//       deleteDoc(doc(assignedUserCollection, taskId)),
+//       deleteDoc(doc(createdByUserCollection, taskId))
+//     ])
+//     props.closeModal()
+//   } catch (error) {
+//     console.error('Error deleting task:', error)
+//   }
+// }
 </script>
 
 <style scoped>

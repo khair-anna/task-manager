@@ -29,7 +29,7 @@
       </router-link> -->
     </div>
     <div>
-      <router-link to="" class="nav text-xl" @click="usersStore.logout">
+      <router-link to="" class="nav text-xl" @click="logout">
         <img src="/svg/logout-white.svg" alt="logout-white" class="w-7 h-7" v-if="isDark" />
         <img src="/svg/logout.svg" alt="logout" class="w-7 h-7" v-else />
         {{ $t('sidebar.logOut') }}
@@ -42,6 +42,16 @@
 import { useDark } from '@vueuse/core'
 import { useUsersStore } from '../stores/UsersStore'
 
+import { signOut } from 'firebase/auth'
+import { auth } from '../firebase'
+import router from '../router'
+
 const isDark = useDark()
 const usersStore = useUsersStore()
+
+const logout = async () => {
+  await signOut(auth)
+  usersStore.clearUser()
+  router.push('/')
+}
 </script>

@@ -28,20 +28,20 @@
       >
         <button
           class="block w-full text-right px-2 py-1 text-sm hover:bg-gray-100 hover:rounded-t-md dark:hover:bg-zinc-500"
-          @click="handleButtonClick('Edit', task)"
+          @click="startEditing(task)"
         >
           {{ $t('buttons.edit') }}
         </button>
         <button
           class="block w-full text-right px-2 py-1 text-sm hover:bg-gray-100 dark:hover:bg-zinc-500"
-          @click="handleButtonClick('InProgress', task.id)"
+          @click="addTaskInProgress(task.id)"
           v-if="status !== `In Progress` && status !== `Completed`"
         >
           {{ $t('buttons.inProgress') }}
         </button>
         <button
           class="block w-full text-right px-2 py-1 text-sm hover:bg-gray-100 dark:hover:bg-zinc-500"
-          @click="handleButtonClick('Complete', task.id)"
+          @click="completeTask(task.id)"
           v-if="status !== `Completed`"
         >
           {{ $t('buttons.complete') }}
@@ -55,7 +55,7 @@
         </button>
         <select
           v-model="selectedMember"
-          @change="assignTaskToMember(task.id)"
+          @change="assignTask(task.id, selectedMember)"
           v-if="isAssignOpen"
           class="absolute z-10 top-28 left-24 rounded-md border dark:bg-zinc-700"
         >
@@ -65,7 +65,7 @@
           </option>
         </select>
       </div>
-      <div @click="tasksStore.openModal(task)" class="cursor-pointer">
+      <div @click="openModal(task)" class="cursor-pointer">
         <span class="block text-2xl mb-3">{{ task.name }}</span>
         <span class="block break-words mb-7">{{ task.description }}</span>
         <span class="block mb-3"
@@ -105,38 +105,43 @@
           <div class="flex gap-8 items-center text-gray-600 justify-between dark:text-gray-200">
             <span>{{ $t('tasks.endDate') }}</span>
             <div>
-              <span class="block text-right">{{ formatEndDate(task.endDate) }}</span>
-              <span class="block text-right text-xs">{{ formatEndYear(task.endDate) }}</span>
+              <span class="block text-right">{{ formatEndYear(task.endDate) }}</span>
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
+  <Teleport to="body">
+    <TaskDetails
+      :task="selectedTask"
+      :is-editing="isEditing"
+      :close-modal="closeModal"
+      :close-editing="closeEditing"
+      :open-editing="openEditing"
+      v-if="isModalOpen"
+    >
+    </TaskDetails>
+  </Teleport>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
+
 import { useTasksStore } from '../stores/TasksStore'
 import { useUsersStore } from '../stores/UsersStore'
 import { useDark } from '@vueuse/core'
 import { vOnClickOutside } from '@vueuse/components'
 
-const menu = ref(null)
-const closeMenu = () => {
-  isMenuOpen.value = null
-}
+import { db } from '../firebase'
+import { doc, updateDoc, getDoc, collection, setDoc } from 'firebase/firestore'
+import { useMutation } from 'vue-query'
 
-const isDark = useDark()
+import TaskDetails from './TaskDetails.vue'
+import { formatTimeYear } from '../composables/formatTimeYear'
+import { formatTimeDate } from '../composables/formatTimeDate'
+import { formatEndYear } from '../composables/formatEndYear'
 
-const tasksStore = useTasksStore()
-const usersStore = useUsersStore()
-
-const isMenuOpen = ref(null)
-
-onMounted(() => {
-  usersStore.getTeamMembers()
-})
 // eslint-disable-next-line no-unused-vars
 const props = defineProps({
   tasks: {
@@ -169,80 +174,236 @@ const props = defineProps({
   }
 })
 
-const formatTimeYear = (timestamp) => {
-  const date = new Date(timestamp)
-  const options = { day: 'numeric', month: 'numeric', year: 'numeric' }
-  return date.toLocaleString('uk-UA', options)
+const menu = ref(null)
+
+const isDark = useDark()
+
+const tasksStore = useTasksStore()
+const usersStore = useUsersStore()
+
+usersStore.getTeamMembers.refetch()
+
+const isMenuOpen = ref(null)
+const isModalOpen = ref(false)
+const selectedTask = ref(null)
+const isEditing = ref(false)
+const selectedMember = ref('')
+const isAssignOpen = ref(false)
+
+const closeEditing = () => {
+  isEditing.value = false
 }
 
-const formatTimeDate = (timestamp) => {
-  const date = new Date(timestamp)
-  const options = { hour: 'numeric', minute: 'numeric', hour12: false, timeZone: 'Europe/Kiev' }
-  return date.toLocaleString('uk-UA', options)
+const openEditing = () => {
+  isEditing.value = true
 }
 
-const formatEndDate = (timestamp) => {
-  const date = timestamp.toDate()
-  const options = {
-    hour: 'numeric',
-    minute: 'numeric',
-    hour12: false,
-    timeZone: 'Europe/Kiev'
-  }
-  return date.toLocaleString('uk-UA', options)
+const openModal = (task) => {
+  selectedTask.value = task
+  isModalOpen.value = true
 }
 
-const formatEndYear = (timestamp) => {
-  const date = timestamp.toDate()
-  const options = {
-    day: 'numeric',
-    month: 'numeric',
-    year: 'numeric'
-  }
-  return date.toLocaleString('uk-UA', options)
+const closeModal = () => {
+  selectedTask.value = null
+  isModalOpen.value = false
+  closeEditing()
 }
 
 const toggleMenu = (index) => {
   isMenuOpen.value = isMenuOpen.value === index ? null : index
 }
 
-const handleButtonClick = (action, taskId) => {
-  if (action === 'Edit') {
-    tasksStore.openModal(taskId)
-    tasksStore.startEditing(taskId)
-    taskId.isEditOpen = true
-  } else if (action === 'InProgress') {
-    tasksStore.addTaskInProgress(taskId)
-  } else if (action === 'Complete') {
-    tasksStore.completeTask(taskId)
-  } else if (action === 'Delete') {
-    tasksStore.deleteTask(taskId)
-  }
-
+const closeMenu = () => {
   isMenuOpen.value = null
 }
 
-const selectedMember = ref('')
-const isAssignOpen = ref(false)
+const startEditing = (task) => {
+  openModal(task)
+  tasksStore.editingTask.id = task.id
+  tasksStore.editingTask.name = task.name
+  tasksStore.editingTask.description = task.description
+  tasksStore.editingTask.endDate = task.endDate
+  openEditing()
+}
 
-const assignTaskToMember = (taskId) => {
+const addTaskInProgressMutation = useMutation(
+  async (taskId) => {
+    const taskDocRef = doc(usersStore.userTasksCollection, taskId)
+    const currentTask = (await getDoc(taskDocRef)).data()
+
+    const assignedUserCollection = collection(db, `users/${currentTask.assignedToId}/tasks`)
+    const createdByUserCollection = collection(db, `users/${currentTask.createdById}/tasks`)
+
+    await Promise.all([
+      updateDoc(doc(assignedUserCollection, taskId), { inProgress: !currentTask.inProgress }),
+      updateDoc(doc(createdByUserCollection, taskId), { inProgress: !currentTask.inProgress })
+    ])
+
+    return taskId
+  },
+  {
+    onSuccess: () => {
+      isMenuOpen.value = null
+    },
+    onError: (error) => {
+      console.error('Error updating task status:', error)
+    }
+  }
+)
+
+const addTaskInProgress = (taskId) => {
+  addTaskInProgressMutation.mutate(taskId)
+}
+
+const completeTaskMutation = useMutation(
+  async (taskId) => {
+    const taskDocRef = doc(usersStore.userTasksCollection, taskId)
+    const currentTask = (await getDoc(taskDocRef)).data()
+
+    const assignedUserCollection = collection(db, `users/${currentTask.assignedToId}/tasks`)
+    const createdByUserCollection = collection(db, `users/${currentTask.createdById}/tasks`)
+
+    await Promise.all([
+      updateDoc(doc(assignedUserCollection, taskId), {
+        completed: !currentTask.completed,
+        inProgress: false
+      }),
+      updateDoc(doc(createdByUserCollection, taskId), {
+        completed: !currentTask.completed,
+        inProgress: false
+      })
+    ])
+    return taskId
+  },
+  {
+    onSuccess: () => {
+      isMenuOpen.value = null
+    },
+    onError: (error) => {
+      console.error('Error updating task status:', error)
+    }
+  }
+)
+
+const completeTask = (taskId) => {
+  completeTaskMutation.mutate(taskId)
+}
+
+const assignTaskMutation = useMutation(
+  async ({ taskId, member }) => {
+    const taskDocRef = doc(usersStore.userTasksCollection, taskId)
+    const currentTask = (await getDoc(taskDocRef)).data()
+
+    await updateDoc(taskDocRef, {
+      assignedToId: member.uid,
+      assignedToUsername: member.username
+    })
+
+    const assignedUserCollection = collection(db, `users/${member.uid}/tasks`)
+    const assignedTaskDocRef = doc(assignedUserCollection, taskId)
+
+    await setDoc(assignedTaskDocRef, {
+      ...currentTask,
+      assignedToId: member.uid,
+      assignedToUsername: member.username
+    })
+
+    return taskId
+  },
+  {
+    onSuccess: () => {
+      isMenuOpen.value = null
+      isAssignOpen.value = false
+      selectedMember.value = ''
+    },
+    onError: (error) => {
+      console.error('Error assigning task:', error)
+    }
+  }
+)
+
+const assignTask = (taskId, member) => {
   if (selectedMember.value) {
-    tasksStore.assignTask(taskId, selectedMember.value)
-    isMenuOpen.value = null
-    isAssignOpen.value = false
+    assignTaskMutation.mutate({ taskId, member })
   }
 }
 
-// watchEffect(() => {
-//   const handleDocumentClick = (event) => {
-//     const menuContainer = document.querySelector('.menu')
-//     if (menuContainer && !menuContainer.contains(event.target)) {
+await new Promise((res) => setTimeout(res, 500))
+
+// const addTaskInProgress = async (taskId) => {
+//   try {
+//     const taskDocRef = doc(usersStore.userTasksCollection, taskId)
+
+//     const currentTask = (await getDoc(taskDocRef)).data()
+
+//     const assignedUserCollection = collection(db, `users/${currentTask.assignedToId}/tasks`)
+//     const createdByUserCollection = collection(db, `users/${currentTask.createdById}/tasks`)
+
+//     await Promise.all([
+//       updateDoc(doc(assignedUserCollection, taskId), { inProgress: !currentTask.inProgress }),
+//       updateDoc(doc(createdByUserCollection, taskId), { inProgress: !currentTask.inProgress })
+//     ])
+
+//     isMenuOpen.value = null
+//   } catch (error) {
+//     console.error('Error updating task status:', error)
+//   }
+// }
+
+// const completeTask = async (taskId) => {
+//   try {
+//     const taskDocRef = doc(usersStore.userTasksCollection, taskId)
+
+//     const currentTask = (await getDoc(taskDocRef)).data()
+
+//     const assignedUserCollection = collection(db, `users/${currentTask.assignedToId}/tasks`)
+//     const createdByUserCollection = collection(db, `users/${currentTask.createdById}/tasks`)
+
+//     await Promise.all([
+//       updateDoc(doc(assignedUserCollection, taskId), {
+//         completed: !currentTask.completed,
+//         inProgress: false
+//       }),
+//       updateDoc(doc(createdByUserCollection, taskId), {
+//         completed: !currentTask.completed,
+//         inProgress: false
+//       })
+//     ])
+
+//     isMenuOpen.value = null
+//   } catch (error) {
+//     console.error('Error updating task status:', error)
+//   }
+// }
+
+// const assignTask = async (taskId, member) => {
+//   if (selectedMember.value) {
+//     try {
+//       const taskDocRef = doc(usersStore.userTasksCollection, taskId)
+
+//       const currentTask = (await getDoc(taskDocRef)).data()
+
+//       await updateDoc(taskDocRef, {
+//         assignedToId: member.uid,
+//         assignedToUsername: member.username
+//       })
+
+//       const assignedUserCollection = collection(db, `users/${member.uid}/tasks`)
+
+//       const assignedTaskDocRef = doc(assignedUserCollection, taskId)
+
+//       await setDoc(assignedTaskDocRef, {
+//         ...currentTask,
+//         assignedToId: member.uid,
+//         assignedToUsername: member.username
+//       })
+
 //       isMenuOpen.value = null
+//       isAssignOpen.value = false
+//       selectedMember.value = ''
+//     } catch (error) {
+//       console.error('Error assigning task:', error)
 //     }
 //   }
-//   document.addEventListener('mousedown', handleDocumentClick)
-//   return () => {
-//     document.removeEventListener('mousedown', handleDocumentClick)
-//   }
-// })
+// }
 </script>

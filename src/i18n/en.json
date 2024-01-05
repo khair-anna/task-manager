@@ -8,7 +8,8 @@
     "noTask": "You don't have any tasks yet",
     "noTeam": "You don't have any team members yet",
     "tasksLength": "Your tasks : ",
-    "teamLength": "Your team members : "
+    "teamLength": "Your team members : ",
+    "noSearchTask": "Can't find any task matches "
   },
   "texts": {
     "textHome": "Want more efficiency in your organization? Taskie is easy for all teams to use, so you can deliver quality work, faster.",
@@ -39,7 +40,8 @@
     "taskName": "Write a task name",
     "taskDescription": "Write a task description",
     "taskEndDate": "Select task's end date",
-    "changeEndDate": "Change task's end date"
+    "changeEndDate": "Change task's end date",
+    "confirmPassword": "Confirm your password"
   },
   "sidebar": {
     "home": "Home",

@@ -1,45 +1,51 @@
 <template>
-  <div class="ml-96 flex flex-col gap-3">
-    <div
-      v-for="task in tasksStore.tasksSearch"
-      :key="task.id"
-      class="border border-light-gray rounded-lg w-80 bg-white dark:bg-dark-bg-black p-3 cursor-pointer border-l-4"
-      :class="[
-        {
-          'border-l-green-400': task.completed,
-          'border-l-yellow-400': task.inProgress,
-          'border-l-blue-400': !task.inProgress && !task.completed
-        }
-      ]"
-      @click="tasksStore.openModal(task)"
-    >
-      <div class="flex justify-between">
-        <div class="flex flex-col">
-          <span>{{ task.name }}</span>
-          <span class="text-xs">{{ task.description }}</span>
-        </div>
-        <div>
-          <span class="block text-light-gray text-xs">{{ formatTimeYear(task.creationTime) }}</span>
-          <span v-if="task.completed" class="p-1 rounded-2xl text-xs bg-green-400">{{
-            $t('tasks.markCompleted')
-          }}</span>
-          <span v-else-if="task.inProgress" class="p-1 rounded-2xl text-xs bg-yellow-400">{{
-            $t('tasks.markInProgress')
-          }}</span>
-          <span v-else class="p-1 rounded-2xl text-xs bg-blue-400">{{ $t('tasks.markNew') }}</span>
-        </div>
-      </div>
-    </div>
+  <div class="ml-64 p-5">
+    <form class="relative" @submit.prevent>
+      <img src="/svg/search.svg" alt="search" class="absolute top-4 left-3" />
+      <input
+        type="text"
+        class="h-14 w-96 rounded-2xl py-1.5 pl-12 text-md dark:bg-dark-bg-black"
+        :placeholder="$t('placeholders.search')"
+        v-model="taskSearch"
+      />
+    </form>
+  </div>
+  <div v-if="isSearching">
+    <Suspense>
+      <TasksAllSearch :searchTask="taskSearch" />
+      <template #fallback>
+        <TasksAllSceleton />
+      </template>
+    </Suspense>
   </div>
 </template>
 <script setup>
-import { useTasksStore } from '../stores/TasksStore'
+import { ref } from 'vue'
+import TasksAllSearch from './TasksAllSearch.vue'
+import TasksAllSceleton from './sceleton/TasksAllSceleton.vue'
+import { watch } from 'vue'
 
-const tasksStore = useTasksStore()
+const taskSearch = ref('')
 
-const formatTimeYear = (timestamp) => {
-  const date = new Date(timestamp)
-  const options = { day: 'numeric', month: 'numeric', year: 'numeric' }
-  return date.toLocaleString('uk-UA', options)
-}
+// eslint-disable-next-line no-unused-vars
+const props = defineProps({
+  isSearching: {
+    type: Boolean
+  },
+  startSearch: {
+    type: Function
+  },
+  closeSearch: {
+    type: Function
+  }
+})
+
+watch(taskSearch, (newValue) => {
+  if (newValue.length === 0) {
+    props.closeSearch()
+  }
+  if (newValue.length !== 0) {
+    props.startSearch()
+  }
+})
 </script>

@@ -31,6 +31,7 @@
         input-class-name="dark:bg-zinc-700 dark:text-white"
         :placeholder="$t('placeholders.taskEndDate')"
         text-input
+        required
       />
       <div class="flex gap-9">
         <button type="submit" class="bg-main-blue px-2 h-10 rounded-lg text-white">
