@@ -90,16 +90,11 @@
 import VueDatePicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import { useTasksStore } from '../stores/TasksStore'
-import { useUsersStore } from '../stores/UsersStore'
 import { useDark } from '@vueuse/core'
 
-import { db } from '../firebase'
-import { doc, deleteDoc, updateDoc, getDoc, collection } from 'firebase/firestore'
-import { useMutation } from 'vue-query'
-
-import { formatTimeYear } from '../composables/formatTimeYear'
-import { formatTimeDate } from '../composables/formatTimeDate'
-import { formatEndYear } from '../composables/formatEndYear'
+import { formatTimeDate, formatTimeYear, formatEndYear } from '../formatTime/formatTime'
+import { useEditTask } from '../mutations/editTask'
+import { useDeleteTask } from '../mutations/deleteTask'
 
 const props = defineProps({
   task: {
@@ -116,7 +111,6 @@ const props = defineProps({
 })
 
 const tasksStore = useTasksStore()
-const usersStore = useUsersStore()
 const isDark = useDark()
 
 const startEditing = (task) => {
@@ -127,43 +121,12 @@ const startEditing = (task) => {
   props.openEditing()
 }
 
-const editTaskMutation = useMutation(
-  async () => {
-    const taskDocRef = doc(usersStore.userTasksCollection, tasksStore.editingTask.id)
-    const currentTask = (await getDoc(taskDocRef)).data()
-
-    const assignedUserCollection = collection(db, `users/${currentTask.assignedToId}/tasks`)
-    const createdByUserCollection = collection(db, `users/${currentTask.createdById}/tasks`)
-
-    await Promise.all([
-      updateDoc(doc(assignedUserCollection, tasksStore.editingTask.id), {
-        name: tasksStore.editingTask.name,
-        description: tasksStore.editingTask.description,
-        endDate: tasksStore.editingTask.endDate
-      }),
-      updateDoc(doc(createdByUserCollection, tasksStore.editingTask.id), {
-        name: tasksStore.editingTask.name,
-        description: tasksStore.editingTask.description,
-        endDate: tasksStore.editingTask.endDate
-      })
-    ])
-  },
-  {
-    onSuccess: () => {
-      props.closeEditing()
-      tasksStore.editingTask.id = null
-      tasksStore.editingTask.name = ''
-      tasksStore.editingTask.description = ''
-      props.closeModal()
-    },
-    onError: (error) => {
-      console.error('Error editing task:', error)
-    }
-  }
-)
+const { mutateAsync: editTaskMutation } = useEditTask()
 
 const editTask = () => {
-  editTaskMutation.mutate()
+  editTaskMutation()
+  props.closeEditing()
+  props.closeModal()
 }
 
 const cancelEdit = () => {
@@ -174,82 +137,12 @@ const cancelEdit = () => {
   props.closeModal()
 }
 
-const deleteTaskMutation = useMutation(
-  async (taskId) => {
-    const taskDocRef = doc(usersStore.userTasksCollection, taskId)
-    const currentTask = (await getDoc(taskDocRef)).data()
-
-    const assignedUserCollection = collection(db, `users/${currentTask.assignedToId}/tasks`)
-    const createdByUserCollection = collection(db, `users/${currentTask.createdById}/tasks`)
-
-    await Promise.all([
-      deleteDoc(doc(assignedUserCollection, taskId)),
-      deleteDoc(doc(createdByUserCollection, taskId))
-    ])
-  },
-  {
-    onSuccess: () => {
-      props.closeModal()
-    },
-    onError: (error) => {
-      console.error('Error deleting task:', error)
-    }
-  }
-)
+const { mutateAsync: deleteTaskMutation } = useDeleteTask()
 
 const deleteTask = (taskId) => {
-  deleteTaskMutation.mutate(taskId)
+  deleteTaskMutation(taskId)
+  props.closeModal()
 }
-
-// const editTask = async () => {
-//   try {
-//     const taskDocRef = doc(usersStore.userTasksCollection, tasksStore.editingTask.id)
-//     const currentTask = (await getDoc(taskDocRef)).data()
-
-//     const assignedUserCollection = collection(db, `users/${currentTask.assignedToId}/tasks`)
-//     const createdByUserCollection = collection(db, `users/${currentTask.createdById}/tasks`)
-
-//     await Promise.all([
-//       updateDoc(doc(assignedUserCollection, tasksStore.editingTask.id), {
-//         name: tasksStore.editingTask.name,
-//         description: tasksStore.editingTask.description,
-//         endDate: tasksStore.editingTask.endDate
-//       }),
-//       updateDoc(doc(createdByUserCollection, tasksStore.editingTask.id), {
-//         name: tasksStore.editingTask.name,
-//         description: tasksStore.editingTask.description,
-//         endDate: tasksStore.editingTask.endDate
-//       })
-//     ])
-
-//     props.closeEditing()
-//     tasksStore.editingTask.id = null
-//     tasksStore.editingTask.name = ''
-//     tasksStore.editingTask.description = ''
-//     props.closeModal()
-//   } catch (error) {
-//     console.error('Error updating task:', error)
-//   }
-// }
-
-// const deleteTask = async (taskId) => {
-//   try {
-//     const taskDocRef = doc(usersStore.userTasksCollection, taskId)
-
-//     const currentTask = (await getDoc(taskDocRef)).data()
-
-//     const assignedUserCollection = collection(db, `users/${currentTask.assignedToId}/tasks`)
-//     const createdByUserCollection = collection(db, `users/${currentTask.createdById}/tasks`)
-
-//     await Promise.all([
-//       deleteDoc(doc(assignedUserCollection, taskId)),
-//       deleteDoc(doc(createdByUserCollection, taskId))
-//     ])
-//     props.closeModal()
-//   } catch (error) {
-//     console.error('Error deleting task:', error)
-//   }
-// }
 </script>
 
 <style scoped>

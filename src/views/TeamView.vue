@@ -1,9 +1,7 @@
 <template>
   <LayoutDefault>
-    <Suspense>
-      <TeamMembers />
-      <template #fallback> <TeamMembersSceleton /> </template>
-    </Suspense>
+    <TeamMembers />
+    <!-- <TeamMembersSceleton /> -->
   </LayoutDefault>
 </template>
 <script setup>

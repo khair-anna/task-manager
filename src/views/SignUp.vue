@@ -73,8 +73,6 @@
         type="submit"
         class="border-2 rounded-lg mx-auto text-xl bg-main-blue py-1 px-2 text-black dark:text-zinc-200 dark:border-0"
       >
-        <!-- :disabled="!isFormValid" -->
-        <!-- :class="{ 'opacity-70': !isFormValid }" -->
         {{ $t('buttons.signUp') }}
       </button>
     </form>
@@ -88,14 +86,9 @@
 </template>
 <script setup>
 import { ref, reactive, computed } from 'vue'
-import { createUserWithEmailAndPassword } from 'firebase/auth'
-import { collection, doc, setDoc, getDoc } from 'firebase/firestore'
-import { auth, db } from '../firebase'
-import router from '../router'
 import useValidate from '@vuelidate/core'
 import { required, minLength, email, sameAs } from '@vuelidate/validators'
-
-import { useUsersStore } from '../stores/UsersStore'
+import { useSignup } from '../mutations/signup'
 
 const jobTitles = ref([
   'BackEnd developer',
@@ -127,50 +120,12 @@ const rules = computed(() => {
 
 const v$ = useValidate(rules, signupForm)
 
-const usersStore = useUsersStore()
+const { mutateAsync } = useSignup()
 
 const signup = async (details) => {
   const result = await v$.value.$validate()
   if (result) {
-    const { email, password, username, jobTitle } = details
-    try {
-      await createUserWithEmailAndPassword(auth, email, password)
-      const userDocRef = doc(db, 'users', auth.currentUser.uid)
-      usersStore.userTasksCollection = collection(db, `users/${auth.currentUser.uid}/tasks`)
-
-      await setDoc(userDocRef, {
-        username,
-        jobTitle
-      })
-
-      const userDoc = await getDoc(userDocRef)
-
-      usersStore.setUser({
-        uid: auth.currentUser.uid,
-        email: auth.currentUser.email,
-        username: userDoc.data().username,
-        jobTitle: userDoc.data().jobTitle
-      })
-    } catch (error) {
-      switch (error.code) {
-        case 'auth/email-already-in-use':
-          alert('Email already in use')
-          break
-        case 'auth/invalid-email':
-          alert('Invalid email')
-          break
-        case 'auth/operation-not-allowed':
-          alert('Operation not allowed')
-          break
-        case 'auth/weak-password':
-          alert('Weak password')
-          break
-        default:
-          console.log(error.message)
-      }
-      return
-    }
-    router.push('/')
+    mutateAsync(details)
   }
 }
 </script>

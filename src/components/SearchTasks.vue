@@ -11,21 +11,13 @@
     </form>
   </div>
   <div v-if="isSearching">
-    <Suspense>
-      <TasksAllSearch :searchTask="taskSearch" />
-      <template #fallback>
-        <TasksAllSceleton />
-      </template>
-    </Suspense>
+    <TasksAll :searchTask="taskSearch" />
   </div>
 </template>
 <script setup>
 import { ref } from 'vue'
-import TasksAllSearch from './TasksAllSearch.vue'
-import TasksAllSceleton from './sceleton/TasksAllSceleton.vue'
+import TasksAll from './TasksAll.vue'
 import { watch } from 'vue'
-
-const taskSearch = ref('')
 
 // eslint-disable-next-line no-unused-vars
 const props = defineProps({
@@ -39,6 +31,8 @@ const props = defineProps({
     type: Function
   }
 })
+
+const taskSearch = ref('')
 
 watch(taskSearch, (newValue) => {
   if (newValue.length === 0) {

@@ -1,7 +1,6 @@
 <template>
   <div>
     <LayoutDefault>
-      <!-- <SearchForm /> -->
       <SearchTasks
         :startSearch="startSearch"
         :closeSearch="closeSearch"
@@ -9,12 +8,8 @@
       />
       <div v-if="!isSearching">
         <TaskForm />
-        <Suspense>
-          <TasksAll />
-          <template #fallback>
-            <TasksAllSceleton />
-          </template>
-        </Suspense>
+        <TasksAllSceleton v-if="isLoading" />
+        <TasksAll />
       </div>
     </LayoutDefault>
   </div>
@@ -26,8 +21,9 @@ import LayoutDefault from '../components/LayoutDefault.vue'
 import TaskForm from '../components/TaskForm.vue'
 import TasksAll from '../components/TasksAll.vue'
 import TasksAllSceleton from '../components/sceleton/TasksAllSceleton.vue'
-// import SearchForm from '../components/SearchForm.vue'
 import SearchTasks from '../components/SearchTasks.vue'
+import loadTasks from '../queries/loadTasks'
+const { isLoading } = loadTasks()
 
 const isSearching = ref(false)
 

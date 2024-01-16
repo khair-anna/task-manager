@@ -2,7 +2,7 @@
   <router-link :to="{ name: 'tasks' }" class="flex [&>*:first-child]:ml-0">
     <div
       class="h-48 w-64 -ml-16 border border-light-gray border-l-4 border-l-zinc-400 rounded-xl bg-white dark:bg-dark-bg-black p-4 flex flex-col justify-between gap-3"
-      v-for="task in tasksStore.tasksAll"
+      v-for="task in data"
       :key="task.id"
     >
       <div>
@@ -34,9 +34,9 @@
   </router-link>
 </template>
 <script setup>
-import { useTasksStore } from '../stores/TasksStore'
 import { useUsersStore } from '../stores/UsersStore'
+import loadTasks from '../queries/loadTasks'
 
+const { data } = loadTasks()
 const usersStore = useUsersStore()
-const tasksStore = useTasksStore()
 </script>

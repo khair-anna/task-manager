@@ -40,18 +40,14 @@
 
 <script setup>
 import { useDark } from '@vueuse/core'
-import { useUsersStore } from '../stores/UsersStore'
 
-import { signOut } from 'firebase/auth'
-import { auth } from '../firebase'
-import router from '../router'
+import { useLogout } from '../mutations/logout'
 
 const isDark = useDark()
-const usersStore = useUsersStore()
 
-const logout = async () => {
-  await signOut(auth)
-  usersStore.clearUser()
-  router.push('/')
+const { mutateAsync } = useLogout()
+
+const logout = () => {
+  mutateAsync()
 }
 </script>

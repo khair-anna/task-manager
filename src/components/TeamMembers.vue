@@ -1,14 +1,14 @@
 <template>
-  <div class="ml-64 p-5" v-if="usersStore.teamMembers.length !== 0">
+  <div class="ml-64 p-5" v-if="data?.length">
     <div class="flex items-center gap-14 mb-8">
       <h2 class="text-2xl">{{ $t('titles.team') }}</h2>
       <span
         class="flex justify-center items-center w-10 h-10 rounded-lg border border-emerald-500 bg-emerald-200 dark:bg-emerald-900"
-        >{{ usersStore.teamMembers.length }}</span
+        >{{ data?.length }}</span
       >
     </div>
     <div
-      v-for="member in usersStore.teamMembers"
+      v-for="member in data"
       :key="member.uid"
       class="border-2 border-emerald-500 rounded-xl w-52 bg-white dark:bg-dark-bg-black dark:border-zinc-400 p-3 mb-5"
     >
@@ -24,13 +24,9 @@
   </div>
 </template>
 <script setup>
-import { useUsersStore } from '../stores/UsersStore'
+import getTeamMembers from '../queries/getTeamMembers'
 
-const usersStore = useUsersStore()
-
-usersStore.getTeamMembers.refetch()
-
-await new Promise((res) => setTimeout(res, 500))
+const { data } = getTeamMembers()
 
 function randomInteger(min, max) {
   return Math.floor(min + Math.random() * (max + 1 - min))

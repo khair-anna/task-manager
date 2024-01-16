@@ -25,8 +25,6 @@
         type="submit"
         class="border-2 rounded-lg mx-auto text-xl bg-main-blue py-1 px-2 text-black dark:text-zinc-200 dark:border-0"
       >
-        <!-- :class="{ 'opacity-70': !isFormValid }"
-        :disabled="!isFormValid" -->
         {{ $t('buttons.logIn') }}
       </button>
     </form>
@@ -40,54 +38,13 @@
 </template>
 <script setup>
 import { ref } from 'vue'
-import { signInWithEmailAndPassword } from 'firebase/auth'
-import { collection, doc, getDoc } from 'firebase/firestore'
-import { auth, db } from '../firebase'
-import router from '../router'
-
-import { useUsersStore } from '../stores/UsersStore'
+import { useLogin } from '../mutations/login'
 
 const loginForm = ref({})
 
-// const isFormValid = computed(() => {
-//   const { email, password } = loginForm.value
-//   return email && password
-// })
+const { mutateAsync } = useLogin()
 
-const usersStore = useUsersStore()
-
-const login = async (details) => {
-  const { email, password } = details
-  try {
-    await signInWithEmailAndPassword(auth, email, password)
-    const userDocRef = doc(db, 'users', auth.currentUser.uid)
-    const userDoc = await getDoc(userDocRef)
-
-    usersStore.setUser({
-      uid: auth.currentUser.uid,
-      email: auth.currentUser.email,
-      username: userDoc.data().username,
-      jobTitle: userDoc.data().jobTitle
-    })
-
-    usersStore.userTasksCollection = collection(db, `users/${auth.currentUser.uid}/tasks`)
-  } catch (error) {
-    switch (error.code) {
-      case 'auth/user-not-found':
-        alert('User not found')
-        break
-      case 'auth/wrong-password':
-        alert('Wrong password')
-        break
-      case 'auth/invalid-login-credentials':
-        alert('Invalid login credentials')
-        break
-      default:
-        console.log(error.message)
-    }
-    return
-  }
-
-  router.push('/')
+const login = (details) => {
+  mutateAsync(details)
 }
 </script>

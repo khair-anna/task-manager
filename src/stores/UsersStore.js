@@ -1,13 +1,7 @@
 import { defineStore } from 'pinia'
-import router from '../router'
-import { auth, db } from '../firebase'
-import { useQuery } from 'vue-query'
 import { ref } from 'vue'
-import { collection, doc, getDoc, getDocs, addDoc, deleteDoc } from 'firebase/firestore'
-import { useTasksStore } from './TasksStore'
 
 export const useUsersStore = defineStore('usersStore', () => {
-  const tasksStore = useTasksStore()
   const currentUser = ref(null)
 
   const setUser = (user) => {
@@ -20,178 +14,11 @@ export const useUsersStore = defineStore('usersStore', () => {
 
   const userTasksCollection = ref(null)
 
-  const teamMembers = ref([])
-
-  // const login = async (details) => {
-  //   const { email, password } = details
-  //   try {
-  //     await signInWithEmailAndPassword(auth, email, password)
-  //     const userDocRef = doc(db, 'users', auth.currentUser.uid)
-  //     const userDoc = await getDoc(userDocRef)
-
-  //     setUser({
-  //       uid: auth.currentUser.uid,
-  //       email: auth.currentUser.email,
-  //       username: userDoc.data().username,
-  //       jobTitle: userDoc.data().jobTitle
-  //     })
-
-  //     userTasksCollection.value = collection(db, `users/${auth.currentUser.uid}/tasks`)
-  //   } catch (error) {
-  //     switch (error.code) {
-  //       case 'auth/user-not-found':
-  //         alert('User not found')
-  //         break
-  //       case 'auth/wrong-password':
-  //         alert('Wrong password')
-  //         break
-  //       case 'auth/invalid-login-credentials':
-  //         alert('Invalid login credentials')
-  //         break
-  //       default:
-  //         alert(error.message)
-  //     }
-  //     return
-  //   }
-
-  //   router.push('/')
-  // }
-
-  // const signup = async (details) => {
-  //   const { email, password, username, jobTitle } = details
-  //   try {
-  //     await createUserWithEmailAndPassword(auth, email, password)
-  //     const userDocRef = doc(db, 'users', auth.currentUser.uid)
-  //     userTasksCollection.value = collection(db, `users/${auth.currentUser.uid}/tasks`)
-
-  //     await setDoc(userDocRef, {
-  //       username,
-  //       jobTitle
-  //     })
-
-  //     const userDoc = await getDoc(userDocRef)
-
-  //     setUser({
-  //       uid: auth.currentUser.uid,
-  //       email: auth.currentUser.email,
-  //       username: userDoc.data().username,
-  //       jobTitle: userDoc.data().jobTitle
-  //     })
-  //   } catch (error) {
-  //     switch (error.code) {
-  //       case 'auth/email-already-in-use':
-  //         alert('Email already in use')
-  //         break
-  //       case 'auth/invalid-email':
-  //         alert('Invalid email')
-  //         break
-  //       case 'auth/operation-not-allowed':
-  //         alert('Operation not allowed')
-  //         break
-  //       case 'auth/weak-password':
-  //         alert('Weak password')
-  //         break
-  //       default:
-  //         alert(error.message)
-  //     }
-  //     return
-  //   }
-
-  //   router.push('/')
-  // }
-
-  // const logout = async () => {
-  //   await signOut(auth)
-  //   clearUser()
-  //   router.push('/')
-  // }
-
-  const fetchUser = () => {
-    auth.onAuthStateChanged(async (user) => {
-      if (user === null) {
-        clearUser()
-      } else {
-        const userDocRef = doc(db, 'users', auth.currentUser.uid)
-        const userDoc = await getDoc(userDocRef)
-
-        setUser({
-          uid: auth.currentUser.uid,
-          email: auth.currentUser.email,
-          username: userDoc.data().username,
-          jobTitle: userDoc.data().jobTitle
-        })
-        userTasksCollection.value = collection(db, `users/${auth.currentUser.uid}/tasks`)
-
-        await tasksStore.loadTasks.refetch()
-
-        if (router.isReady && router.currentRoute.value.path === '/login') {
-          router.push('/')
-        }
-      }
-    })
-
-    router.push('/')
-  }
-
-  // const getTeamMembers = async () => {
-  //   try {
-  //     const usersCollection = collection(db, 'users')
-  //     const querySnapshot = await getDocs(usersCollection)
-
-  //     teamMembers.value = querySnapshot.docs.map((doc) => ({ uid: doc.id, ...doc.data() }))
-  //     // .filter((member) => member.uid !== auth.currentUser.uid)
-
-  //     const teamCollection = collection(db, `users/${auth.currentUser.uid}/team`)
-
-  //     await deleteCollection(teamCollection)
-
-  //     for (const member of teamMembers.value) {
-  //       await addDoc(teamCollection, member)
-  //     }
-  //   } catch (error) {
-  //     console.error('Error getting team members:', error)
-  //   }
-  // }
-
-  const getTeamMembers = useQuery(
-    'getTeamMembers',
-    async () => {
-      const usersCollection = collection(db, 'users')
-      const querySnapshot = await getDocs(usersCollection)
-      const teamMembersData = querySnapshot.docs.map((doc) => ({ uid: doc.id, ...doc.data() }))
-      return teamMembersData
-    },
-    {
-      onSuccess: (data) => {
-        teamMembers.value = data
-
-        const teamCollection = collection(db, `users/${auth.currentUser.uid}/team`)
-        deleteCollection(teamCollection)
-        data.forEach(async (member) => {
-          await addDoc(teamCollection, member)
-        })
-      },
-      onError: (error) => {
-        console.error('Error getting team members:', error)
-      }
-    }
-  )
-
-  const deleteCollection = async (collectionRef) => {
-    const querySnapshot = await getDocs(collectionRef)
-    querySnapshot.forEach((doc) => {
-      deleteDoc(doc.ref)
-    })
-  }
-
   return {
     currentUser,
     userTasksCollection,
-    teamMembers,
     setUser,
-    clearUser,
-    fetchUser,
-    getTeamMembers
+    clearUser
   }
 })
 

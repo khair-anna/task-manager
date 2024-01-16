@@ -60,7 +60,7 @@
           class="absolute z-10 top-28 left-24 rounded-md border dark:bg-zinc-700"
         >
           <option value="">{{ $t('texts.selectMember') }}</option>
-          <option v-for="member in usersStore.teamMembers" :key="member.uid" :value="member">
+          <option v-for="member in data" :key="member.uid" :value="member">
             {{ member.username }}
           </option>
         </select>
@@ -133,14 +133,13 @@ import { useUsersStore } from '../stores/UsersStore'
 import { useDark } from '@vueuse/core'
 import { vOnClickOutside } from '@vueuse/components'
 
-import { db } from '../firebase'
-import { doc, updateDoc, getDoc, collection, setDoc } from 'firebase/firestore'
-import { useMutation } from 'vue-query'
-
 import TaskDetails from './TaskDetails.vue'
-import { formatTimeYear } from '../composables/formatTimeYear'
-import { formatTimeDate } from '../composables/formatTimeDate'
-import { formatEndYear } from '../composables/formatEndYear'
+import { formatTimeDate, formatTimeYear, formatEndYear } from '../formatTime/formatTime'
+
+import { useAddTaskInProgress } from '../mutations/addTaskinProgress'
+import { useCompleteTask } from '../mutations/completeTask'
+import { useAssignTask } from '../mutations/assignTask'
+import getTeamMembers from '../queries/getTeamMembers'
 
 // eslint-disable-next-line no-unused-vars
 const props = defineProps({
@@ -181,7 +180,7 @@ const isDark = useDark()
 const tasksStore = useTasksStore()
 const usersStore = useUsersStore()
 
-usersStore.getTeamMembers.refetch()
+const { data } = getTeamMembers()
 
 const isMenuOpen = ref(null)
 const isModalOpen = ref(false)
@@ -226,184 +225,27 @@ const startEditing = (task) => {
   openEditing()
 }
 
-const addTaskInProgressMutation = useMutation(
-  async (taskId) => {
-    const taskDocRef = doc(usersStore.userTasksCollection, taskId)
-    const currentTask = (await getDoc(taskDocRef)).data()
-
-    const assignedUserCollection = collection(db, `users/${currentTask.assignedToId}/tasks`)
-    const createdByUserCollection = collection(db, `users/${currentTask.createdById}/tasks`)
-
-    await Promise.all([
-      updateDoc(doc(assignedUserCollection, taskId), { inProgress: !currentTask.inProgress }),
-      updateDoc(doc(createdByUserCollection, taskId), { inProgress: !currentTask.inProgress })
-    ])
-
-    return taskId
-  },
-  {
-    onSuccess: () => {
-      isMenuOpen.value = null
-    },
-    onError: (error) => {
-      console.error('Error updating task status:', error)
-    }
-  }
-)
+const { mutateAsync: addTaskInProgressMutation } = useAddTaskInProgress()
 
 const addTaskInProgress = (taskId) => {
-  addTaskInProgressMutation.mutate(taskId)
+  addTaskInProgressMutation(taskId)
+  isMenuOpen.value = null
 }
 
-const completeTaskMutation = useMutation(
-  async (taskId) => {
-    const taskDocRef = doc(usersStore.userTasksCollection, taskId)
-    const currentTask = (await getDoc(taskDocRef)).data()
-
-    const assignedUserCollection = collection(db, `users/${currentTask.assignedToId}/tasks`)
-    const createdByUserCollection = collection(db, `users/${currentTask.createdById}/tasks`)
-
-    await Promise.all([
-      updateDoc(doc(assignedUserCollection, taskId), {
-        completed: !currentTask.completed,
-        inProgress: false
-      }),
-      updateDoc(doc(createdByUserCollection, taskId), {
-        completed: !currentTask.completed,
-        inProgress: false
-      })
-    ])
-    return taskId
-  },
-  {
-    onSuccess: () => {
-      isMenuOpen.value = null
-    },
-    onError: (error) => {
-      console.error('Error updating task status:', error)
-    }
-  }
-)
+const { mutateAsync: completedTaskMutation } = useCompleteTask()
 
 const completeTask = (taskId) => {
-  completeTaskMutation.mutate(taskId)
+  completedTaskMutation(taskId)
+  isMenuOpen.value = null
 }
-
-const assignTaskMutation = useMutation(
-  async ({ taskId, member }) => {
-    const taskDocRef = doc(usersStore.userTasksCollection, taskId)
-    const currentTask = (await getDoc(taskDocRef)).data()
-
-    await updateDoc(taskDocRef, {
-      assignedToId: member.uid,
-      assignedToUsername: member.username
-    })
-
-    const assignedUserCollection = collection(db, `users/${member.uid}/tasks`)
-    const assignedTaskDocRef = doc(assignedUserCollection, taskId)
-
-    await setDoc(assignedTaskDocRef, {
-      ...currentTask,
-      assignedToId: member.uid,
-      assignedToUsername: member.username
-    })
-
-    return taskId
-  },
-  {
-    onSuccess: () => {
-      isMenuOpen.value = null
-      isAssignOpen.value = false
-      selectedMember.value = ''
-    },
-    onError: (error) => {
-      console.error('Error assigning task:', error)
-    }
-  }
-)
+const { mutateAsync: assignTaskMutation } = useAssignTask()
 
 const assignTask = (taskId, member) => {
   if (selectedMember.value) {
-    assignTaskMutation.mutate({ taskId, member })
+    assignTaskMutation({ taskId, member })
+    isMenuOpen.value = null
+    isAssignOpen.value = false
+    selectedMember.value = ''
   }
 }
-
-await new Promise((res) => setTimeout(res, 500))
-
-// const addTaskInProgress = async (taskId) => {
-//   try {
-//     const taskDocRef = doc(usersStore.userTasksCollection, taskId)
-
-//     const currentTask = (await getDoc(taskDocRef)).data()
-
-//     const assignedUserCollection = collection(db, `users/${currentTask.assignedToId}/tasks`)
-//     const createdByUserCollection = collection(db, `users/${currentTask.createdById}/tasks`)
-
-//     await Promise.all([
-//       updateDoc(doc(assignedUserCollection, taskId), { inProgress: !currentTask.inProgress }),
-//       updateDoc(doc(createdByUserCollection, taskId), { inProgress: !currentTask.inProgress })
-//     ])
-
-//     isMenuOpen.value = null
-//   } catch (error) {
-//     console.error('Error updating task status:', error)
-//   }
-// }
-
-// const completeTask = async (taskId) => {
-//   try {
-//     const taskDocRef = doc(usersStore.userTasksCollection, taskId)
-
-//     const currentTask = (await getDoc(taskDocRef)).data()
-
-//     const assignedUserCollection = collection(db, `users/${currentTask.assignedToId}/tasks`)
-//     const createdByUserCollection = collection(db, `users/${currentTask.createdById}/tasks`)
-
-//     await Promise.all([
-//       updateDoc(doc(assignedUserCollection, taskId), {
-//         completed: !currentTask.completed,
-//         inProgress: false
-//       }),
-//       updateDoc(doc(createdByUserCollection, taskId), {
-//         completed: !currentTask.completed,
-//         inProgress: false
-//       })
-//     ])
-
-//     isMenuOpen.value = null
-//   } catch (error) {
-//     console.error('Error updating task status:', error)
-//   }
-// }
-
-// const assignTask = async (taskId, member) => {
-//   if (selectedMember.value) {
-//     try {
-//       const taskDocRef = doc(usersStore.userTasksCollection, taskId)
-
-//       const currentTask = (await getDoc(taskDocRef)).data()
-
-//       await updateDoc(taskDocRef, {
-//         assignedToId: member.uid,
-//         assignedToUsername: member.username
-//       })
-
-//       const assignedUserCollection = collection(db, `users/${member.uid}/tasks`)
-
-//       const assignedTaskDocRef = doc(assignedUserCollection, taskId)
-
-//       await setDoc(assignedTaskDocRef, {
-//         ...currentTask,
-//         assignedToId: member.uid,
-//         assignedToUsername: member.username
-//       })
-
-//       isMenuOpen.value = null
-//       isAssignOpen.value = false
-//       selectedMember.value = ''
-//     } catch (error) {
-//       console.error('Error assigning task:', error)
-//     }
-//   }
-// }
 </script>
