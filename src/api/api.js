@@ -15,16 +15,11 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } f
 import { useUsersStore } from '../stores/UsersStore'
 import { useTasksStore } from '../stores/TasksStore'
 
-async function fetchTasks() {
-  const usersStore = useUsersStore()
+async function fetchTasks(id) {
+  const userTasksCollection = collection(db, `users/${id}/tasks`)
 
-  if (usersStore.userTasksCollection) {
-    const snapshot = await getDocs(
-      query(usersStore.userTasksCollection, orderBy('creationTime', 'desc'))
-    )
-    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-  }
-  return []
+  const snapshot = await getDocs(query(userTasksCollection, orderBy('creationTime', 'desc')))
+  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
 }
 
 async function fetchTeamMembers() {
@@ -34,53 +29,30 @@ async function fetchTeamMembers() {
 }
 
 async function fetchUser() {
-  const usersStore = useUsersStore()
+  const user = auth.currentUser
+  if (!user) {
+    return null
+  }
 
-  auth.onAuthStateChanged(async (user) => {
-    if (user === null) {
-      usersStore.clearUser()
-      return null
-    } else {
-      const userDocRef = doc(db, 'users', auth.currentUser.uid)
-      const userDoc = await getDoc(userDocRef)
+  const userDocRef = doc(db, 'users', user.uid)
+  const userDoc = await getDoc(userDocRef)
 
-      const userData = {
-        uid: auth.currentUser.uid,
-        email: auth.currentUser.email,
-        username: userDoc.data().username,
-        jobTitle: userDoc.data().jobTitle
-      }
-      usersStore.setUser(userData)
-      usersStore.userTasksCollection = collection(db, `users/${auth.currentUser.uid}/tasks`)
+  const userData = {
+    uid: user.uid,
+    email: user.email,
+    username: userDoc.data().username,
+    jobTitle: userDoc.data().jobTitle
+  }
 
-      return userData
-    }
-  })
-  //   const user = auth.currentUser
-  //   if (!user) {
-  //     return null
-  //   }
-
-  //   const userDocRef = doc(db, 'users', user.uid)
-  //   const userDoc = await getDoc(userDocRef)
-
-  //   const userData = {
-  //     uid: user.uid,
-  //     email: user.email,
-  //     username: userDoc.data().username,
-  //     jobTitle: userDoc.data().jobTitle
-  //   }
-
-  //   usersStore.setUser(userData)
-  //   usersStore.userTasksCollection = collection(db, `users/${user.uid}/tasks`)
-
-  //   return userData
+  return userData
 }
 
 async function addTaskInProgress(taskId) {
   const usersStore = useUsersStore()
 
-  const taskDocRef = doc(usersStore.userTasksCollection, taskId)
+  const userTasksCollection = collection(db, `users/${usersStore.userId}/tasks`)
+
+  const taskDocRef = doc(userTasksCollection, taskId)
   const currentTask = (await getDoc(taskDocRef)).data()
 
   const assignedUserCollection = collection(db, `users/${currentTask.assignedToId}/tasks`)
@@ -95,7 +67,9 @@ async function addTaskInProgress(taskId) {
 async function completeTask(taskId) {
   const usersStore = useUsersStore()
 
-  const taskDocRef = doc(usersStore.userTasksCollection, taskId)
+  const userTasksCollection = collection(db, `users/${usersStore.userId}/tasks`)
+
+  const taskDocRef = doc(userTasksCollection, taskId)
   const currentTask = (await getDoc(taskDocRef)).data()
 
   const assignedUserCollection = collection(db, `users/${currentTask.assignedToId}/tasks`)
@@ -116,7 +90,9 @@ async function completeTask(taskId) {
 async function assignTask({ taskId, member }) {
   const usersStore = useUsersStore()
 
-  const taskDocRef = doc(usersStore.userTasksCollection, taskId)
+  const userTasksCollection = collection(db, `users/${usersStore.userId}/tasks`)
+
+  const taskDocRef = doc(userTasksCollection, taskId)
   const currentTask = (await getDoc(taskDocRef)).data()
 
   await updateDoc(taskDocRef, {
@@ -138,8 +114,10 @@ async function editTask() {
   const usersStore = useUsersStore()
   const tasksStore = useTasksStore()
 
+  const userTasksCollection = collection(db, `users/${usersStore.userId}/tasks`)
+
   if (tasksStore.editingTask.id) {
-    const taskDocRef = doc(usersStore.userTasksCollection, tasksStore.editingTask.id)
+    const taskDocRef = doc(userTasksCollection, tasksStore.editingTask.id)
     const currentTask = (await getDoc(taskDocRef)).data()
 
     const assignedUserCollection = collection(db, `users/${currentTask.assignedToId}/tasks`)
@@ -163,7 +141,9 @@ async function editTask() {
 async function deleteTask(taskId) {
   const usersStore = useUsersStore()
 
-  const taskDocRef = doc(usersStore.userTasksCollection, taskId)
+  const userTasksCollection = collection(db, `users/${usersStore.userId}/tasks`)
+
+  const taskDocRef = doc(userTasksCollection, taskId)
   const currentTask = (await getDoc(taskDocRef)).data()
 
   const assignedUserCollection = collection(db, `users/${currentTask.assignedToId}/tasks`)
@@ -179,13 +159,15 @@ function createNewTask() {
   const usersStore = useUsersStore()
   const tasksStore = useTasksStore()
 
-  addDoc(usersStore.userTasksCollection, {
+  const userTasksCollection = collection(db, `users/${usersStore.userId}/tasks`)
+
+  addDoc(userTasksCollection, {
     ...tasksStore.newTask,
     creationTime: Date.now(),
-    createdById: usersStore.currentUser.uid,
-    createdByUsername: usersStore.currentUser.username,
-    assignedToId: usersStore.currentUser.uid,
-    assignedToUsername: usersStore.currentUser.username
+    createdById: usersStore.userId,
+    createdByUsername: usersStore.userUsername,
+    assignedToId: usersStore.userId,
+    assignedToUsername: usersStore.userUsername
   })
   tasksStore.newTask.name = ''
   tasksStore.newTask.description = ''
@@ -193,52 +175,25 @@ function createNewTask() {
 }
 
 async function login(details) {
-  const usersStore = useUsersStore()
-
   const { email, password } = details
 
   await signInWithEmailAndPassword(auth, email, password)
-  const userDocRef = doc(db, 'users', auth.currentUser.uid)
-  const userDoc = await getDoc(userDocRef)
-
-  usersStore.setUser({
-    uid: auth.currentUser.uid,
-    email: auth.currentUser.email,
-    username: userDoc.data().username,
-    jobTitle: userDoc.data().jobTitle
-  })
-
-  usersStore.userTasksCollection = collection(db, `users/${auth.currentUser.uid}/tasks`)
 }
 
 async function signup(details) {
-  const usersStore = useUsersStore()
   const { email, password, username, jobTitle } = details
 
   await createUserWithEmailAndPassword(auth, email, password)
   const userDocRef = doc(db, 'users', auth.currentUser.uid)
-  usersStore.userTasksCollection = collection(db, `users/${auth.currentUser.uid}/tasks`)
 
   await setDoc(userDocRef, {
     username,
     jobTitle
   })
-
-  const userDoc = await getDoc(userDocRef)
-
-  usersStore.setUser({
-    uid: auth.currentUser.uid,
-    email: auth.currentUser.email,
-    username: userDoc.data().username,
-    jobTitle: userDoc.data().jobTitle
-  })
 }
 
 async function logout() {
-  const usersStore = useUsersStore()
-
   await signOut(auth)
-  usersStore.clearUser()
 }
 
 export {

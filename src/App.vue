@@ -1,24 +1,20 @@
 <template>
   <div>
-    <transition
-      enter-active-class="duration-300 ease-out"
-      enter-from-class="transform opacity-0"
-      enter-to-class="opacity-100"
-      leave-active-class="duration-200 ease-in"
-      leave-from-class="opacity-100"
-      leave-to-class="transform opacity-0"
-    >
-      <Teleport to="body">
+    <Teleport to="body">
+      <transition-group
+        tag="div"
+        name="fade"
+        class="space-y-4 fixed z-[2147483647] top-16 right-4 w-96"
+      >
         <Notification
           v-for="alert in alertsStore.alerts"
           :key="alert.id"
-          class="fixed top-4 right-8 w-2/4"
           :intent="alert.type"
           :title="alert.title"
           :on-dismiss="() => alertsStore.alerts.shift()"
         />
-      </Teleport>
-    </transition>
+      </transition-group>
+    </Teleport>
     <LoadingScreen v-if="isLoading" />
     <router-view v-else />
   </div>
@@ -29,10 +25,17 @@ import useUserQuery from './queries/userQuery'
 import LoadingScreen from './components/LoadingScreen.vue'
 import Notification from './components/NotificationDefault.vue'
 import { useAlertsStore } from './stores/alerts'
+import { getAuth, onAuthStateChanged } from 'firebase/auth'
+import { useQueryClient } from 'vue-query'
+
+const auth = getAuth()
+const queryClient = useQueryClient()
+
+onAuthStateChanged(auth, () => {
+  queryClient.invalidateQueries('user')
+})
 
 const alertsStore = useAlertsStore()
-console.log(alertsStore.alerts.length)
 
 const { isLoading } = useUserQuery()
-console.log(`isLoading is ${isLoading.value}`)
 </script>

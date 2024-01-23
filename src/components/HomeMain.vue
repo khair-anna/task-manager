@@ -1,11 +1,13 @@
 <template>
-  <div class="ml-64 mt-20 mb-40 px-5">
-    <h1 class="text-3xl mb-8">{{ $t('titles.tasksLength') }} {{ data?.length }}</h1>
-    <TasksHome />
-  </div>
-  <div class="ml-64 px-5">
-    <h1 class="text-3xl mb-8">{{ $t('titles.teamLength') }} {{ teamData?.length }}</h1>
-    <TeamHome />
+  <div>
+    <div class="sm:mt-20 mt-10 mb-10 sm:mb-40 sm:px-5 pl-5">
+      <h1 class="text-3xl mb-8">{{ $t('titles.tasksLength') }} {{ data?.length }}</h1>
+      <TasksHome />
+    </div>
+    <div class="sm:px-5 pl-5">
+      <h1 class="text-3xl mb-8">{{ $t('titles.teamLength') }} {{ teamData?.length }}</h1>
+      <TeamHome />
+    </div>
   </div>
 </template>
 <script setup>

@@ -1,24 +1,18 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { computed } from 'vue'
+import useUserQuery from '../queries/userQuery'
 
 export const useUsersStore = defineStore('usersStore', () => {
-  const currentUser = ref(null)
+  const { data: user } = useUserQuery()
 
-  const setUser = (user) => {
-    currentUser.value = user
-  }
-
-  const clearUser = () => {
-    currentUser.value = null
-  }
-
-  const userTasksCollection = ref(null)
+  const userId = computed(() => user.value?.uid)
+  const userUsername = computed(() => user.value?.username)
+  const userJobTitle = computed(() => user.value?.jobTitle)
 
   return {
-    currentUser,
-    userTasksCollection,
-    setUser,
-    clearUser
+    userId,
+    userUsername,
+    userJobTitle
   }
 })
 

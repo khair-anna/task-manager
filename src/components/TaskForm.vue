@@ -1,5 +1,5 @@
 <template>
-  <div class="ml-64 mt-16 px-5">
+  <div class="mt-16 px-5">
     <div class="flex justify-end mb-5">
       <button
         class="flex justify-center items-center gap-5 text-white text-xl bg-main-blue h-12 px-3 rounded-xl"
@@ -10,7 +10,7 @@
     </div>
     <form
       @submit.prevent="createNewTask"
-      class="border border-light-gray border-l-4 w-96 min-h-40 rounded-xl bg-white dark:bg-dark-bg-black p-4 flex flex-col gap-3"
+      class="border border-light-gray border-l-4 sm:w-96 min-h-40 rounded-xl bg-white dark:bg-dark-bg-black p-4 flex flex-col gap-3"
       v-if="isCreating"
     >
       <input
@@ -34,8 +34,13 @@
         required
       />
       <div class="flex gap-9">
-        <button type="submit" class="bg-main-blue px-2 h-10 rounded-lg text-white">
-          {{ $t('buttons.add') }}
+        <button
+          type="submit"
+          class="flex items-center space-x-3 bg-main-blue px-2 h-10 rounded-lg text-white"
+          :disabled="isLoading"
+        >
+          <LoadingSpinner v-if="isLoading" />
+          <span>{{ $t('buttons.add') }}</span>
         </button>
         <button
           class="bg-main-blue px-2 h-10 rounded-lg text-white"
@@ -50,6 +55,9 @@
 
 <script setup>
 import { ref } from 'vue'
+
+import LoadingSpinner from './LoadingSpinner.vue'
+
 import { useTasksStore } from '../stores/TasksStore'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
@@ -58,7 +66,7 @@ import { useCreateNewTask } from '../mutations/createNewTask'
 const tasksStore = useTasksStore()
 const isCreating = ref(false)
 
-const { mutateAsync } = useCreateNewTask()
+const { mutateAsync, isLoading } = useCreateNewTask()
 
 const createNewTask = () => {
   mutateAsync()

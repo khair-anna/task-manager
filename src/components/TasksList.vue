@@ -1,6 +1,6 @@
 <template>
-  <div class="flex flex-col gap-5">
-    <div class="flex items-center gap-14">
+  <div>
+    <div class="flex items-center gap-14 mb-5">
       <h2 class="text-3xl">{{ title }}</h2>
       <span
         class="flex justify-center items-center w-10 h-10 rounded-lg border"
@@ -8,125 +8,134 @@
         >{{ arrayLength }}</span
       >
     </div>
-    <div
-      class="menu relative border border-light-gray border-l-4 rounded-xl bg-white dark:bg-dark-bg-black p-4 flex flex-col justify-between gap-3"
-      :class="borderLeftColor"
-      v-for="(task, index) in tasks"
-      :key="task.id"
-    >
-      <div class="flex justify-end">
-        <button @click="toggleMenu(index)">
-          <img src="/svg/menu-white.svg" alt="menu-white" v-if="isDark" />
-          <img src="/svg/menu.svg" alt="menu" v-else />
-        </button>
-      </div>
+    <div class="flex lg:flex-col gap-5 w-screen lg:w-full overflow-x-auto">
       <div
-        ref="menu"
-        v-on-click-outside="closeMenu"
-        v-if="isMenuOpen === index"
-        class="absolute right-0 w-36 rounded-md border bg-white dark:bg-zinc-700"
+        class="menu relative border border-light-gray border-l-4 rounded-xl bg-white dark:bg-dark-bg-black p-4 flex flex-col justify-between gap-3 w-80 2xl:w-96"
+        :class="borderLeftColor"
+        v-for="(task, index) in tasks"
+        :key="task.id"
       >
-        <button
-          class="block w-full text-right px-2 py-1 text-sm hover:bg-gray-100 hover:rounded-t-md dark:hover:bg-zinc-500"
-          @click="startEditing(task)"
+        <div class="flex justify-end">
+          <button @click="toggleMenu(index)">
+            <img src="/svg/menu-white.svg" alt="menu-white" v-if="isDark" />
+            <img src="/svg/menu.svg" alt="menu" v-else />
+          </button>
+        </div>
+        <div
+          ref="menu"
+          v-on-click-outside="closeMenu"
+          v-if="isMenuOpen === index"
+          class="absolute right-0 w-36 rounded-md border bg-white dark:bg-zinc-700"
         >
-          {{ $t('buttons.edit') }}
-        </button>
-        <button
-          class="block w-full text-right px-2 py-1 text-sm hover:bg-gray-100 dark:hover:bg-zinc-500"
-          @click="addTaskInProgress(task.id)"
-          v-if="status !== `In Progress` && status !== `Completed`"
-        >
-          {{ $t('buttons.inProgress') }}
-        </button>
-        <button
-          class="block w-full text-right px-2 py-1 text-sm hover:bg-gray-100 dark:hover:bg-zinc-500"
-          @click="completeTask(task.id)"
-          v-if="status !== `Completed`"
-        >
-          {{ $t('buttons.complete') }}
-        </button>
-        <button
-          class="block w-full text-right px-2 py-1 text-sm hover:bg-gray-100 relative dark:hover:bg-zinc-500"
-          @click="isAssignOpen = !isAssignOpen"
-          v-if="status !== `In Progress` && status !== `Completed`"
-        >
-          {{ $t('buttons.assign') }}
-        </button>
-        <select
-          v-model="selectedMember"
-          @change="assignTask(task.id, selectedMember)"
-          v-if="isAssignOpen"
-          class="absolute z-10 top-28 left-24 rounded-md border dark:bg-zinc-700"
-        >
-          <option value="">{{ $t('texts.selectMember') }}</option>
-          <option v-for="member in data" :key="member.uid" :value="member">
-            {{ member.username }}
-          </option>
-        </select>
-      </div>
-      <div @click="openModal(task)" class="cursor-pointer">
-        <span class="block text-2xl mb-3">{{ task.name }}</span>
-        <span class="block break-words mb-7">{{ task.description }}</span>
-        <span class="block mb-3"
-          >{{ $t('tasks.createdBy') }}
-          <span class="py-1 px-3 rounded-2xl bg-emerald-400 dark:bg-emerald-900 text-sm">{{
-            task.createdByUsername
-          }}</span></span
-        >
-        <span class="block"
-          >{{ $t('tasks.assignedTo') }}
-          <span
-            class="py-1 px-3 rounded-2xl text-sm"
-            :class="[
-              {
-                'bg-emerald-400': task.assignedToId === usersStore.currentUser.uid,
-                'dark:bg-emerald-900': task.assignedToId === usersStore.currentUser.uid,
-                'bg-lime-300': task.assignedToId !== usersStore.currentUser.uid,
-                'dark:bg-lime-800': task.assignedToId !== usersStore.currentUser.uid
-              }
-            ]"
-            >{{ task.assignedToUsername }}</span
-          ></span
-        >
-      </div>
-      <div class="flex justify-between">
-        <span class="py-1 px-3 rounded-2xl text-xs self-end" :class="statusBgColor">{{
-          status
-        }}</span>
-        <div>
-          <div class="flex gap-8 items-center text-light-gray justify-between mb-3">
-            <span>{{ $t('tasks.creationDate') }}</span>
-            <div>
-              <span class="block text-right">{{ formatTimeDate(task.creationTime) }}</span>
-              <span class="block text-right text-xs">{{ formatTimeYear(task.creationTime) }}</span>
+          <button
+            class="flex w-full px-2 py-1 text-sm hover:bg-gray-100 hover:rounded-t-md dark:hover:bg-zinc-500"
+            @click="startEditing(task)"
+          >
+            {{ $t('buttons.edit') }}
+          </button>
+          <button
+            class="flex justify-between items-center w-full px-2 py-1 text-sm hover:bg-gray-100 dark:hover:bg-zinc-500"
+            @click="addTaskInProgress(task.id)"
+            v-if="status !== `In Progress` && status !== `Completed`"
+          >
+            <span>{{ $t('buttons.inProgress') }} </span>
+            <LoadingSpinner v-if="loadInProgress" />
+          </button>
+          <button
+            class="flex justify-between items-center w-full px-2 py-1 text-sm hover:bg-gray-100 dark:hover:bg-zinc-500"
+            @click="completeTask(task.id)"
+            v-if="status !== `Completed`"
+          >
+            <span>{{ $t('buttons.complete') }} </span>
+            <LoadingSpinner v-if="loadCompleting" />
+          </button>
+          <button
+            class="flex justify-between items-center w-full px-2 py-1 text-sm hover:bg-gray-100 relative dark:hover:bg-zinc-500"
+            @click="isAssignOpen = !isAssignOpen"
+            v-if="status !== `In Progress` && status !== `Completed`"
+          >
+            <span>{{ $t('buttons.assign') }}</span>
+            <LoadingSpinner v-if="loadAssigning" />
+          </button>
+          <select
+            v-model="selectedMember"
+            @change="assignTask(task.id, selectedMember)"
+            v-if="isAssignOpen"
+            class="absolute z-10 top-28 left-24 rounded-md border dark:bg-zinc-700"
+          >
+            <option value="">{{ $t('texts.selectMember') }}</option>
+            <option v-for="member in data" :key="member.uid" :value="member">
+              {{ member.username }}
+            </option>
+          </select>
+        </div>
+        <div @click="openModal(task)" class="cursor-pointer">
+          <span class="block text-2xl mb-3">{{ task.name }}</span>
+          <span class="block overflow-hidden text-ellipsis whitespace-nowrap mb-7 w-72">{{
+            task.description
+          }}</span>
+          <span class="block mb-3"
+            >{{ $t('tasks.createdBy') }}
+            <span class="py-1 px-3 rounded-2xl bg-emerald-400 dark:bg-emerald-900 text-sm">{{
+              task.createdByUsername
+            }}</span></span
+          >
+          <span class="block"
+            >{{ $t('tasks.assignedTo') }}
+            <span
+              class="py-1 px-3 rounded-2xl text-sm"
+              :class="[
+                {
+                  'bg-emerald-400': task.assignedToId === usersStore.userId,
+                  'dark:bg-emerald-900': task.assignedToId === usersStore.userId,
+                  'bg-lime-300': task.assignedToId !== usersStore.userId,
+                  'dark:bg-lime-800': task.assignedToId !== usersStore.userId
+                }
+              ]"
+              >{{ task.assignedToUsername }}</span
+            ></span
+          >
+        </div>
+        <div class="flex justify-between">
+          <span class="py-1 px-2 rounded-2xl text-xs self-end" :class="statusBgColor">{{
+            status
+          }}</span>
+          <div>
+            <div class="flex gap-8 items-center text-light-gray justify-between mb-3">
+              <span>{{ $t('tasks.creationDate') }}</span>
+              <div>
+                <span class="block text-right">{{ formatTimeDate(task.creationTime) }}</span>
+                <span class="block text-right text-xs">{{
+                  formatTimeYear(task.creationTime)
+                }}</span>
+              </div>
             </div>
-          </div>
-          <div class="flex gap-8 items-center text-gray-600 justify-between dark:text-gray-200">
-            <span>{{ $t('tasks.endDate') }}</span>
-            <div>
-              <span class="block text-right">{{ formatEndYear(task.endDate) }}</span>
+            <div class="flex gap-8 items-center text-gray-600 justify-between dark:text-gray-200">
+              <span>{{ $t('tasks.endDate') }}</span>
+              <div>
+                <span class="block text-right">{{ formatEndYear(task.endDate) }}</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+    <Teleport to="body">
+      <TaskDetails
+        :task="selectedTask"
+        :is-editing="isEditing"
+        :close-modal="closeModal"
+        :close-editing="closeEditing"
+        :open-editing="openEditing"
+        v-if="isModalOpen"
+      >
+      </TaskDetails>
+    </Teleport>
   </div>
-  <Teleport to="body">
-    <TaskDetails
-      :task="selectedTask"
-      :is-editing="isEditing"
-      :close-modal="closeModal"
-      :close-editing="closeEditing"
-      :open-editing="openEditing"
-      v-if="isModalOpen"
-    >
-    </TaskDetails>
-  </Teleport>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
 import { useTasksStore } from '../stores/TasksStore'
 import { useUsersStore } from '../stores/UsersStore'
@@ -134,6 +143,8 @@ import { useDark } from '@vueuse/core'
 import { vOnClickOutside } from '@vueuse/components'
 
 import TaskDetails from './TaskDetails.vue'
+import LoadingSpinner from './LoadingSpinner.vue'
+
 import { formatTimeDate, formatTimeYear, formatEndYear } from '../formatTime/formatTime'
 
 import { useAddTaskInProgress } from '../mutations/addTaskinProgress'
@@ -222,30 +233,47 @@ const startEditing = (task) => {
   tasksStore.editingTask.name = task.name
   tasksStore.editingTask.description = task.description
   tasksStore.editingTask.endDate = task.endDate
+  isMenuOpen.value = null
   openEditing()
 }
 
-const { mutateAsync: addTaskInProgressMutation } = useAddTaskInProgress()
+const { mutateAsync: addTaskInProgressMutation, isLoading: loadInProgress } = useAddTaskInProgress()
 
 const addTaskInProgress = (taskId) => {
   addTaskInProgressMutation(taskId)
-  isMenuOpen.value = null
 }
 
-const { mutateAsync: completedTaskMutation } = useCompleteTask()
+watch(loadInProgress, (newValue) => {
+  if (!newValue) {
+    isMenuOpen.value = null
+  }
+})
+
+const { mutateAsync: completedTaskMutation, isLoading: loadCompleting } = useCompleteTask()
 
 const completeTask = (taskId) => {
   completedTaskMutation(taskId)
-  isMenuOpen.value = null
 }
-const { mutateAsync: assignTaskMutation } = useAssignTask()
+
+watch(loadCompleting, (newValue) => {
+  if (!newValue) {
+    isMenuOpen.value = null
+  }
+})
+
+const { mutateAsync: assignTaskMutation, isLoading: loadAssigning } = useAssignTask()
 
 const assignTask = (taskId, member) => {
   if (selectedMember.value) {
     assignTaskMutation({ taskId, member })
-    isMenuOpen.value = null
     isAssignOpen.value = false
     selectedMember.value = ''
   }
 }
+
+watch(loadAssigning, (newValue) => {
+  if (!newValue) {
+    isMenuOpen.value = null
+  }
+})
 </script>

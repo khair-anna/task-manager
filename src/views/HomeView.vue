@@ -1,8 +1,10 @@
 <template>
   <div>
-    <LayoutDefault v-if="usersStore.currentUser">
-      <HomeMainSceleton v-if="isLoading" />
-      <HomeMain v-else />
+    <LayoutDefault v-if="user?.uid">
+      <div class="xl:ml-64">
+        <HomeMainSceleton v-if="isLoading" />
+        <HomeMain v-else />
+      </div>
     </LayoutDefault>
     <HomeDefault v-else />
   </div>
@@ -13,11 +15,9 @@ import LayoutDefault from '../components/LayoutDefault.vue'
 import HomeDefault from '../components/HomeDefault.vue'
 import HomeMain from '../components/HomeMain.vue'
 import HomeMainSceleton from '../components/sceleton/HomeMainSceleton.vue'
-import { useUsersStore } from '../stores/UsersStore'
-
 import loadTasks from '../queries/loadTasks'
+import useUserQuery from '../queries/userQuery'
 
+const { data: user } = useUserQuery()
 const { isLoading } = loadTasks()
-
-const usersStore = useUsersStore()
 </script>

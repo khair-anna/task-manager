@@ -2,11 +2,12 @@
   <div>
     <LayoutDefault>
       <SearchTasks
+        class="xl:ml-64"
         :startSearch="startSearch"
         :closeSearch="closeSearch"
         :isSearching="isSearching"
       />
-      <div v-if="!isSearching">
+      <div v-if="!isSearching" class="xl:ml-64">
         <TaskForm />
         <TasksAllSceleton v-if="isLoading" />
         <TasksAll />
@@ -22,7 +23,9 @@ import TaskForm from '../components/TaskForm.vue'
 import TasksAll from '../components/TasksAll.vue'
 import TasksAllSceleton from '../components/sceleton/TasksAllSceleton.vue'
 import SearchTasks from '../components/SearchTasks.vue'
+
 import loadTasks from '../queries/loadTasks'
+
 const { isLoading } = loadTasks()
 
 const isSearching = ref(false)

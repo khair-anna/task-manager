@@ -1,5 +1,5 @@
 <template>
-  <div class="grid grid-cols-3 ml-64 mt-16 px-5 gap-5" v-if="data?.length">
+  <div class="grid grid-rows-3 lg:grid-cols-3 lg:grid-rows-1 mt-16 px-5 gap-5" v-if="data?.length">
     <TasksList
       :tasks="tasks"
       :title="$t('titles.newTasks')"

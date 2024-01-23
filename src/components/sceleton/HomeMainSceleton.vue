@@ -1,20 +1,22 @@
 <template>
-  <div class="ml-64 mt-20 mb-40 px-5">
-    <AnimatedPlaceholder class="w-40 h-10 mb-5" />
-    <div class="flex [&>*:first-child]:ml-0">
-      <TasksHomeSceleton />
-      <TasksHomeSceleton />
-      <TasksHomeSceleton />
-      <TasksHomeSceleton />
+  <div>
+    <div class="mt-20 mb-40 px-5">
+      <AnimatedPlaceholder class="w-40 h-10 mb-5" />
+      <div class="flex [&>*:first-child]:ml-0">
+        <TasksHomeSceleton />
+        <TasksHomeSceleton />
+        <TasksHomeSceleton />
+        <TasksHomeSceleton />
+      </div>
     </div>
-  </div>
-  <div class="ml-64 px-5">
-    <AnimatedPlaceholder class="w-40 h-10 mb-5" />
-    <div class="flex [&>*:first-child]:ml-0">
-      <MemberSceleton class="-mb-20" />
-      <MemberSceleton class="-mb-20" />
-      <MemberSceleton class="-mb-20" />
-      <MemberSceleton class="-mb-20" />
+    <div class="px-5">
+      <AnimatedPlaceholder class="w-40 h-10 mb-5" />
+      <div class="flex [&>*:first-child]:ml-0">
+        <MemberSceleton class="-mb-20" />
+        <MemberSceleton class="-mb-20" />
+        <MemberSceleton class="-mb-20" />
+        <MemberSceleton class="-mb-20" />
+      </div>
     </div>
   </div>
 </template>

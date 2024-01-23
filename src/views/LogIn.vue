@@ -23,9 +23,11 @@
       />
       <button
         type="submit"
-        class="border-2 rounded-lg mx-auto text-xl bg-main-blue py-1 px-2 text-black dark:text-zinc-200 dark:border-0"
+        class="flex space-x-3 border-2 rounded-lg mx-auto text-xl bg-main-blue py-1 px-2 text-black dark:text-zinc-200 dark:border-0"
+        :disabled="isLoading"
       >
-        {{ $t('buttons.logIn') }}
+        <LoadingSpinner v-if="isLoading" />
+        <span> {{ $t('buttons.logIn') }}</span>
       </button>
     </form>
     <div class="mt-10 block text-center">
@@ -39,10 +41,11 @@
 <script setup>
 import { ref } from 'vue'
 import { useLogin } from '../mutations/login'
+import LoadingSpinner from '../components/LoadingSpinner.vue'
 
 const loginForm = ref({})
 
-const { mutateAsync } = useLogin()
+const { mutateAsync, isLoading } = useLogin()
 
 const login = (details) => {
   mutateAsync(details)

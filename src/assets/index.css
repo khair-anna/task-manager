@@ -9,3 +9,17 @@
 body {
   @apply text-primary-dark bg-bg-color font-Roboto dark:text-white dark:bg-dark-bg-color;
 }
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.modal {
+  background: rgba(0, 0, 0, 0.5);
+}

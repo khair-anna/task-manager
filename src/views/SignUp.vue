@@ -71,9 +71,11 @@
       >
       <button
         type="submit"
-        class="border-2 rounded-lg mx-auto text-xl bg-main-blue py-1 px-2 text-black dark:text-zinc-200 dark:border-0"
+        class="flex space-x-3 border-2 rounded-lg mx-auto text-xl bg-main-blue py-1 px-2 text-black dark:text-zinc-200 dark:border-0"
+        :disabled="isLoading"
       >
-        {{ $t('buttons.signUp') }}
+        <LoadingSpinner v-if="isLoading" />
+        <span>{{ $t('buttons.signUp') }}</span>
       </button>
     </form>
     <div class="mt-10 block text-center">
@@ -89,6 +91,7 @@ import { ref, reactive, computed } from 'vue'
 import useValidate from '@vuelidate/core'
 import { required, minLength, email, sameAs } from '@vuelidate/validators'
 import { useSignup } from '../mutations/signup'
+import LoadingSpinner from '../components/LoadingSpinner.vue'
 
 const jobTitles = ref([
   'BackEnd developer',
@@ -120,7 +123,7 @@ const rules = computed(() => {
 
 const v$ = useValidate(rules, signupForm)
 
-const { mutateAsync } = useSignup()
+const { mutateAsync, isLoading } = useSignup()
 
 const signup = async (details) => {
   const result = await v$.value.$validate()

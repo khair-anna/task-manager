@@ -1,5 +1,5 @@
 <template>
-  <div class="grid grid-cols-3 ml-64 mt-16 px-5 gap-5">
+  <div class="grid grid-cols-3 mt-16 px-5 gap-5">
     <div class="flex flex-col gap-5">
       <AnimatedPlaceholder class="w-40 h-10" />
       <TasksListSceleton />

@@ -1,16 +1,16 @@
 <template>
-  <div class="bg-white dark:bg-dark-bg-black px-32 text-lg w-full fixed top-0 left-0">
+  <div class="bg-white dark:bg-dark-bg-black lg:px-32 sm:text-lg w-full fixed top-0 left-0">
     <nav class="flex justify-between p-5">
       <router-link :to="{ name: 'home' }" class="flex gap-3 items-center">
-        <img src="/svg/logo.svg" alt="logo" />
-        <span class="text-2xl tracking-widest">TASKIE</span>
+        <img src="/svg/logo.svg" alt="logo" class="sm:w-7 w-5" />
+        <span class="sm:text-2xl tracking-widest">TASKIE</span>
       </router-link>
-      <div class="flex gap-11 items-center">
-        <div>
+      <div class="flex gap-5 sm:gap-11 items-center">
+        <div class="hidden sm:block">
           <button class="p-3 border-r-2" @click="switchUa">UA</button>
           <button class="p-3" @click="switchEn">EN</button>
         </div>
-        <button @click="toggleDark()">
+        <button @click="toggleDark()" class="hidden sm:block">
           <img src="/svg/sun.svg" alt="sun" v-if="isDark" />
           <img src="/svg/moon.svg" alt="moon" v-else class="w-7 h-7" />
         </button>
