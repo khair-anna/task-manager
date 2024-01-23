@@ -27,12 +27,17 @@ import Notification from './components/NotificationDefault.vue'
 import { useAlertsStore } from './stores/alerts'
 import { getAuth, onAuthStateChanged } from 'firebase/auth'
 import { useQueryClient } from 'vue-query'
+import router from './router'
 
 const auth = getAuth()
 const queryClient = useQueryClient()
 
 onAuthStateChanged(auth, () => {
   queryClient.invalidateQueries('user')
+
+  if (router.currentRoute.value.path === '/login' || router.currentRoute.value.path === '/signup') {
+    router.push('/')
+  }
 })
 
 const alertsStore = useAlertsStore()

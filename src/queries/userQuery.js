@@ -7,9 +7,6 @@ export default function useUserQuery() {
   return useQuery({
     queryKey: ['user'],
     queryFn: fetchUser,
-    // onSuccess: (data) => {
-    //   console.log(data)
-    // },
     onError: () => {
       alertsStore.addNotification('error', 'Error getting a current user!')
     }
