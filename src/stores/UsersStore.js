@@ -1,28 +1,3 @@
-// const fetchUser = () => {
-//   auth.onAuthStateChanged(async (user) => {
-//     if (user === null) {
-//       clearUser()
-//     } else {
-//       const userDocRef = doc(db, 'users', auth.currentUser.uid)
-//       const userDoc = await getDoc(userDocRef)
-
-//       setUser({
-//         uid: auth.currentUser.uid,
-//         email: auth.currentUser.email,
-//         username: userDoc.data().username,
-//         jobTitle: userDoc.data().jobTitle
-//       })
-//       userTasksCollection.value = collection(db, `users/${auth.currentUser.uid}/tasks`)
-
-//       if (router.isReady && router.currentRoute.value.path === '/login') {
-//         router.push('/')
-//       }
-//     }
-//   })
-
-//   router.push('/')
-// }
-
 import { defineStore } from 'pinia'
 import { computed } from 'vue'
 import useUserQuery from '../queries/userQuery'
