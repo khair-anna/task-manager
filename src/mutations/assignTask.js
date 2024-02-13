@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from 'vue-query'
 import { assignTask } from '../api/api'
-import { useAlertsStore } from '../stores/alerts'
+import { useAlertsStore } from '../stores/AlertsStore'
 
 export function useAssignTask() {
   const queryClient = useQueryClient()
@@ -9,7 +9,6 @@ export function useAssignTask() {
   return useMutation({
     mutationFn: ({ taskId, member }) => assignTask({ taskId, member }),
     onSuccess: () => {
-      alertsStore.addNotification('success', 'Task was successfully assigned')
       queryClient.invalidateQueries({
         queryKey: ['tasks']
       })

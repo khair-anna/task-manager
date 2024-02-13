@@ -7,28 +7,23 @@
   </div>
   <div class="flex flex-col items-center justify-center h-screen -mt-7">
     <form @submit.prevent="login(loginForm)" class="flex flex-col gap-5">
-      <input
-        name="email"
+      <InputUi
         type="email"
+        name="email"
         :placeholder="$t('placeholders.email')"
-        class="h-10 w-80 rounded-lg p-3 dark:bg-dark-bg-black"
         v-model="loginForm.email"
+        :errors="v$.email.$errors"
       />
-      <input
-        name="password"
+      <InputUi
         type="password"
+        name="password"
         :placeholder="$t('placeholders.password')"
-        class="h-10 w-80 rounded-lg p-3 dark:bg-dark-bg-black"
         v-model="loginForm.password"
+        :errors="v$.password.$errors"
       />
-      <button
-        type="submit"
-        class="flex space-x-3 border-2 rounded-lg mx-auto text-xl bg-main-blue py-1 px-2 text-black dark:text-zinc-200 dark:border-0"
-        :disabled="isLoading"
-      >
-        <LoadingSpinner v-if="isLoading" />
+      <ButtonUI :is-loading="isLoading">
         <span> {{ $t('buttons.logIn') }}</span>
-      </button>
+      </ButtonUI>
     </form>
     <div class="mt-10 block text-center">
       <span class="block pb-3 dark:text-zinc-400">{{ $t('texts.textLogIn') }}</span>
@@ -39,15 +34,42 @@
   </div>
 </template>
 <script setup>
-import { ref } from 'vue'
+import { reactive, computed } from 'vue'
+import useValidate from '@vuelidate/core'
+import { required, email } from '@vuelidate/validators'
 import { useLogin } from '../mutations/login'
-import LoadingSpinner from '../components/LoadingSpinner.vue'
+import ButtonUI from '../ui/ButtonUI.vue'
+import InputUi from '../ui/InputUi.vue'
+import router from '../router'
+import { useAlertsStore } from '../stores/AlertsStore'
 
-const loginForm = ref({})
+const loginForm = reactive({
+  email: '',
+  password: ''
+})
+
+const rules = computed(() => {
+  return {
+    email: { required, email },
+    password: { required }
+  }
+})
+
+const v$ = useValidate(rules, loginForm)
+
+const alertsStore = useAlertsStore()
 
 const { mutateAsync, isLoading } = useLogin()
 
-const login = (details) => {
-  mutateAsync(details)
+const login = async (details) => {
+  const result = await v$.value.$validate()
+  if (result) {
+    mutateAsync(details, {
+      onSuccess: () => {
+        router.push('/')
+        alertsStore.addNotification('success', 'You are successfully logged in')
+      }
+    })
+  }
 }
 </script>

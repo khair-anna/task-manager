@@ -7,57 +7,34 @@
   </div>
   <div class="flex flex-col items-center justify-center h-screen -mt-7">
     <form @submit.prevent="signup(signupForm)" class="flex flex-col gap-5">
-      <input
+      <InputUi
         type="text"
         name="name"
         :placeholder="$t('placeholders.username')"
-        class="h-10 w-80 rounded-lg p-3 dark:bg-dark-bg-black"
         v-model="signupForm.username"
+        :errors="v$.username.$errors"
       />
-      <span
-        v-for="error in v$.username.$errors"
-        :key="error.$uid"
-        class="text-sm text-red-600 -mt-5"
-        >{{ error.$message }}</span
-      >
-      <input
+      <InputUi
+        type="email"
         name="email"
         :placeholder="$t('placeholders.email')"
-        class="h-10 w-80 rounded-lg p-3 dark:bg-dark-bg-black"
         v-model="signupForm.email"
+        :errors="v$.email.$errors"
       />
-      <span
-        v-for="error in v$.email.$errors"
-        :key="error.$uid"
-        class="text-sm text-red-600 -mt-5"
-        >{{ error.$message }}</span
-      >
-      <input
-        name="password"
+      <InputUi
         type="password"
+        name="password"
         :placeholder="$t('placeholders.createPassword')"
-        class="h-10 w-80 rounded-lg p-3 dark:bg-dark-bg-black"
         v-model="signupForm.password"
+        :errors="v$.password.$errors"
       />
-      <span
-        v-for="error in v$.password.$errors"
-        :key="error.$uid"
-        class="text-sm text-red-600 -mt-5"
-        >{{ error.$message }}</span
-      >
-      <input
-        name="password"
+      <InputUi
         type="password"
+        name="password"
         :placeholder="$t('placeholders.confirmPassword')"
-        class="h-10 w-80 rounded-lg p-3 dark:bg-dark-bg-black"
         v-model="signupForm.confirmPassword"
+        :errors="v$.confirmPassword.$errors"
       />
-      <span
-        v-for="error in v$.confirmPassword.$errors"
-        :key="error.$uid"
-        class="text-sm text-red-600 -mt-5"
-        >{{ error.$message }}</span
-      >
       <label class="dark:text-zinc-400">{{ $t('texts.selectJob') }}</label>
       <select v-model="signupForm.jobTitle" class="dark:bg-dark-bg-black">
         <option disabled>{{ $t('texts.selectJob') }}</option>
@@ -67,16 +44,12 @@
         v-for="error in v$.jobTitle.$errors"
         :key="error.$uid"
         class="text-sm text-red-600 -mt-5"
-        >{{ error.$message }}</span
       >
-      <button
-        type="submit"
-        class="flex space-x-3 border-2 rounded-lg mx-auto text-xl bg-main-blue py-1 px-2 text-black dark:text-zinc-200 dark:border-0"
-        :disabled="isLoading"
-      >
-        <LoadingSpinner v-if="isLoading" />
+        {{ error.$message }}
+      </span>
+      <ButtonUI :is-loading="isLoading">
         <span>{{ $t('buttons.signUp') }}</span>
-      </button>
+      </ButtonUI>
     </form>
     <div class="mt-10 block text-center">
       <span class="block pb-3 dark:text-zinc-400">{{ $t('texts.textSignUp') }}</span>
@@ -87,13 +60,16 @@
   </div>
 </template>
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { reactive, computed } from 'vue'
 import useValidate from '@vuelidate/core'
 import { required, minLength, email, sameAs } from '@vuelidate/validators'
 import { useSignup } from '../mutations/signup'
-import LoadingSpinner from '../components/LoadingSpinner.vue'
+import ButtonUI from '../ui/ButtonUI.vue'
+import InputUi from '../ui/InputUi.vue'
+import router from '../router'
+import { useAlertsStore } from '../stores/AlertsStore'
 
-const jobTitles = ref([
+const jobTitles = [
   'BackEnd developer',
   'FrontEnd developer',
   'HR manager',
@@ -101,7 +77,7 @@ const jobTitles = ref([
   'Project Manager',
   'Security specialist',
   'UI/UX'
-])
+]
 
 const signupForm = reactive({
   username: '',
@@ -123,12 +99,19 @@ const rules = computed(() => {
 
 const v$ = useValidate(rules, signupForm)
 
+const alertsStore = useAlertsStore()
+
 const { mutateAsync, isLoading } = useSignup()
 
 const signup = async (details) => {
   const result = await v$.value.$validate()
   if (result) {
-    mutateAsync(details)
+    mutateAsync(details, {
+      onSuccess: () => {
+        router.push('/')
+        alertsStore.addNotification('success', 'Your accout was successfully signed up')
+      }
+    })
   }
 }
 </script>

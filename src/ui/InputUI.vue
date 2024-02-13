@@ -1,0 +1,39 @@
+<template>
+  <input
+    :type="type"
+    :name="name"
+    :placeholder="placeholder"
+    class="h-10 w-80 rounded-lg p-3 dark:bg-dark-bg-black"
+    :value="modelValue"
+    @input="$emit('update:modelValue', $event.target.value)"
+  />
+  <span v-for="error in errors" :key="error.$uid" class="text-sm text-red-600 -mt-4">{{
+    error.$message
+  }}</span>
+</template>
+
+<script setup>
+// eslint-disable-next-line no-unused-vars
+const props = defineProps({
+  type: {
+    type: String,
+    required: true
+  },
+  name: {
+    type: String,
+    required: true
+  },
+  placeholder: {
+    type: String,
+    required: true
+  },
+  modelValue: {
+    type: String,
+    required: true
+  },
+  errors: {
+    type: Array,
+    default: () => []
+  }
+})
+</script>

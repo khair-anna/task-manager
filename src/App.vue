@@ -24,7 +24,7 @@
 import useUserQuery from './queries/userQuery'
 import LoadingScreen from './components/LoadingScreen.vue'
 import Notification from './components/NotificationDefault.vue'
-import { useAlertsStore } from './stores/alerts'
+import { useAlertsStore } from './stores/AlertsStore'
 import { getAuth, onAuthStateChanged } from 'firebase/auth'
 import { useQueryClient } from 'vue-query'
 import router from './router'

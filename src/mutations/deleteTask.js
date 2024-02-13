@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from 'vue-query'
 import { deleteTask } from '../api/api'
-import { useAlertsStore } from '../stores/alerts'
+import { useAlertsStore } from '../stores/AlertsStore'
 
 export function useDeleteTask() {
   const queryClient = useQueryClient()
@@ -9,7 +9,6 @@ export function useDeleteTask() {
   return useMutation({
     mutationFn: (taskId) => deleteTask(taskId),
     onSuccess: () => {
-      alertsStore.addNotification('success', 'Task was successfully deleted')
       queryClient.invalidateQueries({
         queryKey: ['tasks']
       })

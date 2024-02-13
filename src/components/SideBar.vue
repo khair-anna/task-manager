@@ -40,12 +40,21 @@
 import { useDark } from '@vueuse/core'
 import LoadingSpinner from './LoadingSpinner.vue'
 import { useLogout } from '../mutations/logout'
+import router from '../router'
+import { useAlertsStore } from '../stores/AlertsStore'
 
 const isDark = useDark()
 
-const { mutateAsync, isLoading } = useLogout()
+const alertsStore = useAlertsStore()
+
+const { mutateAsync, isLoading, data } = useLogout()
 
 const logout = () => {
-  mutateAsync()
+  mutateAsync(data, {
+    onSuccess: () => {
+      router.push('/')
+      alertsStore.addNotification('success', 'You are successfully logged out')
+    }
+  })
 }
 </script>

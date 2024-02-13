@@ -25,23 +25,19 @@ import { watch } from 'vue'
 const props = defineProps({
   isSearching: {
     type: Boolean
-  },
-  startSearch: {
-    type: Function
-  },
-  closeSearch: {
-    type: Function
   }
 })
+
+const emit = defineEmits(['startSearch', 'closeSearch'])
 
 const taskSearch = ref('')
 
 watch(taskSearch, (newValue) => {
   if (newValue.length === 0) {
-    props.closeSearch()
+    emit('closeSearch')
   }
   if (newValue.length !== 0) {
-    props.startSearch()
+    emit('startSearch')
   }
 })
 </script>

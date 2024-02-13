@@ -103,14 +103,15 @@ import VueDatePicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import { useTasksStore } from '../stores/TasksStore'
 import { useDark } from '@vueuse/core'
-import { watch } from 'vue'
 
 import LoadingSpinner from './LoadingSpinner.vue'
 
 import { formatTimeDate, formatTimeYear, formatEndYear } from '../formatTime/formatTime'
+import { useAlertsStore } from '../stores/AlertsStore'
 import { useEditTask } from '../mutations/editTask'
 import { useDeleteTask } from '../mutations/deleteTask'
 
+// eslint-disable-next-line no-unused-vars
 const props = defineProps({
   task: {
     type: Object,
@@ -119,13 +120,13 @@ const props = defineProps({
   isEditing: {
     type: Boolean,
     required: true
-  },
-  closeModal: Function,
-  closeEditing: Function,
-  openEditing: Function
+  }
 })
 
+const emit = defineEmits(['closeModal', 'closeEditing', 'openEditing'])
+
 const tasksStore = useTasksStore()
+const alertsStore = useAlertsStore()
 const isDark = useDark()
 
 const startEditing = (task) => {
@@ -133,39 +134,41 @@ const startEditing = (task) => {
   tasksStore.editingTask.name = task.name
   tasksStore.editingTask.description = task.description
   tasksStore.editingTask.endDate = task.endDate
-  props.openEditing()
+  emit('openEditing')
 }
 
-const { mutateAsync: editTaskMutation, isLoading: loadEditing } = useEditTask()
+const { mutateAsync: editTaskMutation, data, isLoading: loadEditing } = useEditTask()
 
 const editTask = () => {
-  editTaskMutation()
+  editTaskMutation(data, {
+    onSuccess: () => {
+      tasksStore.editingTask.id = null
+      tasksStore.editingTask.name = ''
+      tasksStore.editingTask.description = ''
+      tasksStore.editingTask.endDate = ''
+      emit('closeEditing')
+      emit('closeModal')
+      alertsStore.addNotification('success', 'Task was successfully edited')
+    }
+  })
 }
 
-watch(loadEditing, (newValue) => {
-  if (!newValue) {
-    props.closeEditing()
-    props.closeModal()
-  }
-})
-
 const cancelEdit = () => {
-  props.closeEditing()
+  emit('closeEditing')
   tasksStore.editingTask.name = ''
   tasksStore.editingTask.description = ''
   tasksStore.editingTask.endDate = ''
-  props.closeModal()
+  emit('closeModal')
 }
 
 const { mutateAsync: deleteTaskMutation, isLoading: loadDeleting } = useDeleteTask()
 
 const deleteTask = (taskId) => {
-  deleteTaskMutation(taskId)
+  deleteTaskMutation(taskId, {
+    onSuccess: () => {
+      emit('closeModal')
+      alertsStore.addNotification('success', 'Task was successfully deleted')
+    }
+  })
 }
-
-watch(loadDeleting, (newValue) => {
-  if (!newValue) {
-    props.closeModal()
-  }
-})
 </script>

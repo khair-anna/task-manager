@@ -169,9 +169,6 @@ function createNewTask() {
     assignedToId: usersStore.userId,
     assignedToUsername: usersStore.userUsername
   })
-  tasksStore.newTask.name = ''
-  tasksStore.newTask.description = ''
-  tasksStore.newTask.endDate = ''
 }
 
 async function login(details) {

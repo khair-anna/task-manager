@@ -3,8 +3,8 @@
     <LayoutDefault>
       <SearchTasks
         class="xl:ml-64"
-        :startSearch="startSearch"
-        :closeSearch="closeSearch"
+        @startSearch="startSearch"
+        @closeSearch="closeSearch"
         :isSearching="isSearching"
       />
       <div v-if="!isSearching" class="xl:ml-64">

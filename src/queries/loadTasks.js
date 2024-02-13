@@ -1,6 +1,6 @@
 import { useQuery } from 'vue-query'
 import { fetchTasks } from '../api/api'
-import { useAlertsStore } from '../stores/alerts'
+import { useAlertsStore } from '../stores/AlertsStore'
 import { computed } from 'vue'
 import useUserQuery from './userQuery'
 

@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from 'vue-query'
 import { addTaskInProgress } from '../api/api'
-import { useAlertsStore } from '../stores/alerts'
+import { useAlertsStore } from '../stores/AlertsStore'
 
 export function useAddTaskInProgress() {
   const queryClient = useQueryClient()
@@ -9,7 +9,6 @@ export function useAddTaskInProgress() {
   return useMutation({
     mutationFn: (taskId) => addTaskInProgress(taskId),
     onSuccess: () => {
-      alertsStore.addNotification('success', 'Task was successfully added in progress')
       queryClient.invalidateQueries({
         queryKey: ['tasks']
       })

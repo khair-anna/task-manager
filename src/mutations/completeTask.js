@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from 'vue-query'
 import { completeTask } from '../api/api'
-import { useAlertsStore } from '../stores/alerts'
+import { useAlertsStore } from '../stores/AlertsStore'
 
 export function useCompleteTask() {
   const alertsStore = useAlertsStore()
@@ -9,7 +9,6 @@ export function useCompleteTask() {
   return useMutation({
     mutationFn: (taskId) => completeTask(taskId),
     onSuccess: () => {
-      alertsStore.addNotification('success', 'Task was successfully completed')
       queryClient.invalidateQueries({
         queryKey: ['tasks']
       })

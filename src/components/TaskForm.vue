@@ -59,17 +59,26 @@ import { ref } from 'vue'
 import LoadingSpinner from './LoadingSpinner.vue'
 
 import { useTasksStore } from '../stores/TasksStore'
+import { useAlertsStore } from '../stores/AlertsStore'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import { useCreateNewTask } from '../mutations/createNewTask'
 
 const tasksStore = useTasksStore()
+const alertsStore = useAlertsStore()
 const isCreating = ref(false)
 
-const { mutateAsync, isLoading } = useCreateNewTask()
+const { mutateAsync, isLoading, data } = useCreateNewTask()
 
 const createNewTask = () => {
-  mutateAsync()
+  mutateAsync(data, {
+    onSuccess: () => {
+      alertsStore.addNotification('success', 'Task was successfully created')
+      tasksStore.newTask.name = ''
+      tasksStore.newTask.description = ''
+      tasksStore.newTask.endDate = ''
+    }
+  })
   isCreating.value = false
 }
 </script>

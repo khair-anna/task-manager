@@ -61,7 +61,7 @@
             v-model="selectedMember"
             @change="assignTask(task.id, selectedMember)"
             v-if="isAssignOpen"
-            class="absolute z-10 top-28 left-24 rounded-md border dark:bg-zinc-700"
+            class="absolute z-10 top-24 left-8 rounded-md border dark:bg-zinc-700"
           >
             <option value="">{{ $t('texts.selectMember') }}</option>
             <option v-for="member in data" :key="member.uid" :value="member">
@@ -124,9 +124,9 @@
       <TaskDetails
         :task="selectedTask"
         :is-editing="isEditing"
-        :close-modal="closeModal"
-        :close-editing="closeEditing"
-        :open-editing="openEditing"
+        @close-modal="closeModal"
+        @close-editing="closeEditing"
+        @open-editing="openEditing"
         v-if="isModalOpen"
       >
       </TaskDetails>
@@ -135,10 +135,11 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 
 import { useTasksStore } from '../stores/TasksStore'
 import { useUsersStore } from '../stores/UsersStore'
+import { useAlertsStore } from '../stores/AlertsStore'
 import { useDark } from '@vueuse/core'
 import { vOnClickOutside } from '@vueuse/components'
 
@@ -190,6 +191,7 @@ const isDark = useDark()
 
 const tasksStore = useTasksStore()
 const usersStore = useUsersStore()
+const alertsStore = useAlertsStore()
 
 const { data } = getTeamMembers()
 
@@ -240,40 +242,40 @@ const startEditing = (task) => {
 const { mutateAsync: addTaskInProgressMutation, isLoading: loadInProgress } = useAddTaskInProgress()
 
 const addTaskInProgress = (taskId) => {
-  addTaskInProgressMutation(taskId)
+  addTaskInProgressMutation(taskId, {
+    onSuccess: () => {
+      isMenuOpen.value = null
+      alertsStore.addNotification('success', 'Task was successfully added in progress')
+    }
+  })
 }
-
-watch(loadInProgress, (newValue) => {
-  if (!newValue) {
-    isMenuOpen.value = null
-  }
-})
 
 const { mutateAsync: completedTaskMutation, isLoading: loadCompleting } = useCompleteTask()
 
 const completeTask = (taskId) => {
-  completedTaskMutation(taskId)
+  completedTaskMutation(taskId, {
+    onSuccess: () => {
+      isMenuOpen.value = null
+      alertsStore.addNotification('success', 'Task was successfully completed')
+    }
+  })
 }
-
-watch(loadCompleting, (newValue) => {
-  if (!newValue) {
-    isMenuOpen.value = null
-  }
-})
 
 const { mutateAsync: assignTaskMutation, isLoading: loadAssigning } = useAssignTask()
 
 const assignTask = (taskId, member) => {
   if (selectedMember.value) {
-    assignTaskMutation({ taskId, member })
-    isAssignOpen.value = false
-    selectedMember.value = ''
+    assignTaskMutation(
+      { taskId, member },
+      {
+        onSuccess: () => {
+          isAssignOpen.value = false
+          selectedMember.value = ''
+          isMenuOpen.value = null
+          alertsStore.addNotification('success', 'Task was successfully assigned')
+        }
+      }
+    )
   }
 }
-
-watch(loadAssigning, (newValue) => {
-  if (!newValue) {
-    isMenuOpen.value = null
-  }
-})
 </script>

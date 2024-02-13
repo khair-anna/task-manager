@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from 'vue-query'
 import { signup } from '../api/api'
-import { useAlertsStore } from '../stores/alerts'
-import router from '../router'
+import { useAlertsStore } from '../stores/AlertsStore'
 
 export function useSignup() {
   const queryClient = useQueryClient()
@@ -10,11 +9,9 @@ export function useSignup() {
   return useMutation({
     mutationFn: (details) => signup(details),
     onSuccess: () => {
-      alertsStore.addNotification('success', 'Your accout was successfully signed up')
       queryClient.invalidateQueries({
         queryKey: ['user']
       })
-      router.push('/')
     },
     onError: (error) => {
       switch (error.code) {

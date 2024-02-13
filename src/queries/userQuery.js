@@ -1,6 +1,6 @@
 import { useQuery } from 'vue-query'
 import { fetchUser } from '../api/api'
-import { useAlertsStore } from '../stores/alerts'
+import { useAlertsStore } from '../stores/AlertsStore'
 
 export default function useUserQuery() {
   const alertsStore = useAlertsStore()
