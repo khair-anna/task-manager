@@ -27,7 +27,7 @@
             <img src="/svg/delete-white.svg" alt="delete-white" v-if="isDark" />
             <img src="/svg/delete.svg" alt="delete" v-else />
           </button>
-          <button @click="closeModal">
+          <button @click="emit('closeModal')">
             <img src="/svg/close-white.svg" alt="close-white" v-if="isDark" />
             <img src="/svg/close.svg" alt="close" v-else />
           </button>
@@ -111,8 +111,7 @@ import { useAlertsStore } from '../stores/AlertsStore'
 import { useEditTask } from '../mutations/editTask'
 import { useDeleteTask } from '../mutations/deleteTask'
 
-// eslint-disable-next-line no-unused-vars
-const props = defineProps({
+defineProps({
   task: {
     type: Object,
     default: () => {}

@@ -22,7 +22,7 @@
         :errors="v$.password.$errors"
       />
       <ButtonUI :is-loading="isLoading">
-        <span> {{ $t('buttons.logIn') }}</span>
+        {{ $t('buttons.logIn') }}
       </ButtonUI>
     </form>
     <div class="mt-10 block text-center">

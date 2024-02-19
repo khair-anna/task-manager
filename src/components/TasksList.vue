@@ -153,8 +153,7 @@ import { useCompleteTask } from '../mutations/completeTask'
 import { useAssignTask } from '../mutations/assignTask'
 import getTeamMembers from '../queries/getTeamMembers'
 
-// eslint-disable-next-line no-unused-vars
-const props = defineProps({
+defineProps({
   tasks: {
     type: Array,
     default: () => []

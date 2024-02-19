@@ -13,15 +13,13 @@
 </template>
 
 <script setup>
-// eslint-disable-next-line no-unused-vars
-const props = defineProps({
+defineProps({
   type: {
     type: String,
     required: true
   },
   name: {
-    type: String,
-    required: true
+    type: String
   },
   placeholder: {
     type: String,

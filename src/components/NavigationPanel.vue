@@ -41,8 +41,7 @@ import { useDark } from '@vueuse/core'
 import LoadingSpinner from './LoadingSpinner.vue'
 import { useLogout } from '../mutations/logout'
 
-// eslint-disable-next-line no-unused-vars
-const props = defineProps({
+defineProps({
   toogleNav: Function
 })
 const isDark = useDark()

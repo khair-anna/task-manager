@@ -21,8 +21,7 @@ import { ref } from 'vue'
 import TasksAll from './TasksAll.vue'
 import { watch } from 'vue'
 
-// eslint-disable-next-line no-unused-vars
-const props = defineProps({
+defineProps({
   isSearching: {
     type: Boolean
   }

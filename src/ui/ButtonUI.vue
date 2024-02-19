@@ -12,8 +12,7 @@
 <script setup>
 import LoadingSpinner from '../components/LoadingSpinner.vue'
 
-// eslint-disable-next-line no-unused-vars
-const props = defineProps({
+defineProps({
   isLoading: {
     type: Boolean,
     required: true

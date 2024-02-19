@@ -34,14 +34,12 @@
         required
       />
       <div class="flex gap-9">
-        <button
-          type="submit"
-          class="flex items-center space-x-3 bg-main-blue px-2 h-10 rounded-lg text-white"
-          :disabled="isLoading"
+        <ButtonUI
+          :is-loading="isLoading"
+          class="items-center h-10 text-white border-0 mx-0 text-base py-0 dark:text-white"
         >
-          <LoadingSpinner v-if="isLoading" />
-          <span>{{ $t('buttons.add') }}</span>
-        </button>
+          {{ $t('buttons.add') }}
+        </ButtonUI>
         <button
           class="bg-main-blue px-2 h-10 rounded-lg text-white"
           @click="isCreating = !isCreating"
@@ -56,7 +54,7 @@
 <script setup>
 import { ref } from 'vue'
 
-import LoadingSpinner from './LoadingSpinner.vue'
+import ButtonUI from '../ui/ButtonUI.vue'
 
 import { useTasksStore } from '../stores/TasksStore'
 import { useAlertsStore } from '../stores/AlertsStore'

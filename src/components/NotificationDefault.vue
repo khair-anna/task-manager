@@ -38,8 +38,7 @@
   </div>
 </template>
 <script setup>
-// eslint-disable-next-line no-unused-vars
-const props = defineProps({
+defineProps({
   intent: {
     type: String,
     validator(value) {

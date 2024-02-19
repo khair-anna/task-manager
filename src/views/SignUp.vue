@@ -48,7 +48,7 @@
         {{ error.$message }}
       </span>
       <ButtonUI :is-loading="isLoading">
-        <span>{{ $t('buttons.signUp') }}</span>
+        {{ $t('buttons.signUp') }}
       </ButtonUI>
     </form>
     <div class="mt-10 block text-center">
